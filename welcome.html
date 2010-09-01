@@ -1,0 +1,29 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
+<html> <head>
+<title>Buzz Chat Bot</title>
+<link rel="stylesheet" type="text/css" media="screen" href="css/style.css" />
+</head>
+
+<body>
+<h1>Welcome to the Buzz Chat Bot</h1>
+
+<b>Usage: How to use the bot</b>
+<ol>
+    <li>Give the bot access to your Buzz account via the magic of OAuth</li>
+    <li>Add the bot buzzchatbot@appspot.com to your Chat or IM client</li>
+    <li>Ask the bot for help by typing <i>/help</i></li>
+</ol>
+
+
+{% if access_token_exists %}
+<form action="/delete_tokens" method="post">
+<input type="submit" value="Remove the bot's access to your account"></input>
+</form>
+{% else %}
+<form action="{{ destination }}" method="post">
+<input type="submit" value="Start using the bot by giving it access to your account"></input>
+</form>
+{% endif %}
+
+<hr></hr>
+</body> </html>

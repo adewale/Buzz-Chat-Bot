@@ -1,0 +1,21 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
+<html> <head>
+<title>Buzz Chat Bot</title>
+<link rel="stylesheet" type="text/css" media="screen" href="css/style.css" />
+</head>
+
+<body>
+<div>
+    <h1>{{ user_profile_data.displayName }}'s settings for the Buzz Chat Bot</h1>
+    <img src="{{ user_profile_data.photos.1.value }}">
+</div>
+
+<hr></hr>
+
+<hr></hr>
+<h1>Access Token is: {{ access_token }}</h1>
+
+<h1>Profile Data: {{ user_profile_data }}</h1>
+
+<hr></hr>
+</body> </html>

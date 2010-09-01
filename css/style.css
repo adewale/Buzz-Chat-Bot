@@ -1,0 +1,103 @@
+body {
+	/*background-color: #D5F1FF;original*/
+	/*background-color: #0099ff;warm blue*/
+	/*background-color: #9966cc;rich almost velvety purple*/
+	/*background-color: #339999;teal*/
+	/*background-color: #D4D0C8;smooth windows grey*/
+	/*background-color: #cc3300;clashing red*/
+	/*background-color: #ff9900;crass orange*/
+	/*background-color: #99cc33;Rich green*/
+	/*background-color: #EEEEE0;*/
+	/*background-color: #738059;*/
+	/*background-color: #B8CC8F;*/
+	background-color: #738059;
+	/*font-family: Verdana, Geneva, Arial, Helvetica, sans-serif;*/
+	font-family: "Trebuchet MS",  "Times New Roman", Serif;
+}
+
+th {
+	background-color: #B8CC8F;
+	border-width: 1px;
+	border-style: solid;
+	border-color: #000000;
+	border-top: 0px;
+	border-right: 0px;
+	border-left: 0px;
+}
+
+h6 {
+	font-size: 7pt; 
+	font-family: Verdana, Geneva, Arial, Helvetica, sans-serif;
+}
+
+p {
+	color: #000000;
+	background-color: #ffffff;
+}
+
+a {
+	color:#336699;
+}
+
+a:hover {
+	text-decoration: underline !important;
+	color: blue !important;
+}
+
+
+.menuItem {
+	background: #ffffff;
+	text-align: center;
+	border-width: 1px;
+	border-style: solid;
+	border-color: #000000;
+}
+
+.sitelink {
+	color: #000000;
+}
+
+.whatsNew {
+	font-style: italic;
+	font-weight: bold;
+}
+
+.mainText {
+	margin-left: 5px;
+	margin-right: 5px;
+	margin-bottom: 5px;
+}
+
+.borderedTable {
+	border-width: 1px;
+	border-style: solid;
+	border-color: #000000;
+}
+
+.borderedNavTable {
+	border-width: 1px;
+	border-style: solid;
+	border-color: #000000;
+	background-color:#ccccc0;
+}
+
+
+/*
+Custom list classes begin here
+*/
+.listHead {
+	font-weight: bold;
+	border-width: 1px;
+	border-style: solid;
+	border-color: #000000;
+	border-top:1px;
+	border-left:1px;
+	border-right:1px;
+	display:block;
+	margin-top: 20px;
+}
+
+.listItem {
+	display: block;
+	margin-left: 10px;
+}
