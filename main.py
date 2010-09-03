@@ -21,11 +21,11 @@ from google.appengine.ext.webapp.util import login_required
 from google.appengine.ext.webapp.util import run_wsgi_app
 from google.appengine.api import urlfetch
 from google.appengine.api import users
-from google.appengine.ext.webapp import xmpp_handlers
 
 import buzz_gae_client
 import logging
 import os
+import xmpp
 
 CONSUMER_KEY = 'anonymous'
 CONSUMER_SECRET = 'anonymous'
@@ -138,17 +138,12 @@ class ProfileViewingHandler(webapp.RequestHandler):
         path = os.path.join(os.path.dirname(__file__), 'profile.html')
 	self.response.out.write(template.render(path, template_values))
 
-class XmppHandler(xmpp_handlers.CommandHandler):
-  def help_command(self, message=None):
-    logging.info('Received message from: %s' % message.sender)
-    message.reply('We all need a little help sometimes')
-
 application = webapp.WSGIApplication([
 ('/', WelcomeHandler),
 ('/delete_tokens', TokenDeletionHandler),
 ('/finish_dance', DanceFinishingHandler),
 ('/profile', ProfileViewingHandler),
-('/_ah/xmpp/message/chat/', XmppHandler),],
+('/_ah/xmpp/message/chat/', xmpp.XmppHandler),],
   debug = True)
 
 def main():

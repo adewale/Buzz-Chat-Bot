@@ -1,0 +1,3 @@
+The tests required Nose and NoseGae.
+They can be run like this:
+nosetests --with-gae tracker_tests.py
