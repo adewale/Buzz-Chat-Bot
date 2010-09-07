@@ -56,12 +56,12 @@ class MessageBuilderTest(unittest.TestCase):
     self.assertValid(message)
 
   def test_builds_valid_message_for_list(self):
-    items = ['1', '2', '3']
+    items = ['1', '2', '3', '4']
     message_builder = MessageBuilder()
     for item in items:
       message_builder.add(item)
     message = message_builder.build_message()
-    expected = '''<html xmlns='http://jabber.org/protocol/xhtml-im'><body xmlns="http://www.w3.org/1999/xhtml">1<br></br>2<br></br>3
+    expected = '''<html xmlns='http://jabber.org/protocol/xhtml-im'><body xmlns="http://www.w3.org/1999/xhtml">1<br></br>2<br></br>3<br></br>4
     </body>
     </html>'''
     self.assertEquals(expected, message)

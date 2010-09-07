@@ -136,9 +136,8 @@ class MessageBuilder(object):
   def build_message(self):
     text = ''
     for index,line in enumerate(self.lines):
-
       text += html.escape(line)
-      if (index+1) !=len(self.lines):
+      if (index+1) < len(self.lines):
         text += '<br></br>'
 
     return self._build_raw_message(text)
@@ -152,8 +151,8 @@ class MessageBuilder(object):
 
 commands = [
     '/help Prints out this message\n',
-    '/track [search term] Starts tracking the given search term and returns the id for your subscription\n'
-    '/untrack [id] Removes your subscription for that id\n'
+    '/track [search term] Starts tracking the given search term and returns the id for your subscription\n',
+    '/untrack [id] Removes your subscription for that id\n',
     '/list Lists all search terms and ids currently being tracked by you'
 ]
 
