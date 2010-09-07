@@ -11,15 +11,17 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from xml.sax import make_parser, handler
+from xmpp import MessageBuilder
 
 import unittest
-import xml.etree.ElementTree
-
-from xmpp import MessageBuilder
+import pshb
+import feedparser
 
 class MessageBuilderTest(unittest.TestCase):
   def assertValid(self, string):
-    from xml.sax import make_parser, handler
+    self.assertTrue('<body' in string, 'Did not contain required string <body')
+    self.assertTrue('</body>' in string, 'Did not contain required string </body>')
 
     parser = make_parser()
     parser.setFeature(handler.feature_namespaces,True)
@@ -69,5 +71,25 @@ class MessageBuilderTest(unittest.TestCase):
     1<br></br>2<br></br>3
     </body>
     </html>'''
+    self.assertEquals(expected, message)
+    self.assertValid(message)
+
+  def test_builds_valid_message_for_post(self):
+    search_term = 'some search'
+    url = 'http://example.com/item1'
+    feedUrl = 'http://example.com/feed'
+    title = 'some title'
+    content = 'some content'
+    date_published = None
+    author = 'some guy'
+    entry = feedparser.FeedParserDict({'id':feedUrl})
+    post = pshb.PostFactory.createPost(url, feedUrl, title, content, date_published, author, entry)
+    message_builder = MessageBuilder()
+    message = message_builder.build_message_from_post(post, search_term)
+    expected = '''<html xmlns='http://jabber.org/protocol/xhtml-im'>
+    <body xmlns="http://www.w3.org/1999/xhtml">
+    %s matched: <a href='%s'>%s</a>
+    </body>
+    </html>''' % (search_term, url, title)
     self.assertEquals(expected, message)
     self.assertValid(message)
