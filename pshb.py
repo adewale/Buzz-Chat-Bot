@@ -197,10 +197,16 @@ class ContentParser(object):
 
 class HubSubscriber(object):
   def subscribe(self, url, hub, callback_url):
+    self._talk_to_hub('subscribe', url, hub, callback_url)
+
+  def unsubscribe(self, url, hub, callback_url):
+    self._talk_to_hub('unsubscribe', url, hub, callback_url)
+
+  def _talk_to_hub(self, mode, url, hub, callback_url):
     parameters = {"hub.callback": callback_url,
-                  "hub.mode": "subscribe",
+                  "hub.mode": mode,
                   "hub.topic": url,
-                  "hub.verify": "async", # We don't want subscriptions to block until verification happens
+                  "hub.verify": "async", # We don't want un/subscriptions to block until verification happens
                   "hub.verify_token": settings.SECRET_TOKEN, #TODO Must generate a token based on some secret value
     }
     payload = urllib.urlencode(parameters)
@@ -208,6 +214,6 @@ class HubSubscriber(object):
                               payload=payload,
                               method=urlfetch.POST,
                               headers={'Content-Type': 'application/x-www-form-urlencoded'})
-    logging.info("Status of subscription for feed: %s at hub: %s is: %d" % (url, hub, response.status_code))
+    logging.info("Status of %s for feed: %s at hub: %s is: %d" % (mode, url, hub, response.status_code))
     if response.status_code != 202:
       logging.info(response.content)

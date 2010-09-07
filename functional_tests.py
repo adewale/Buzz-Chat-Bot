@@ -17,22 +17,99 @@ import unittest
 
 from gaetestbed import FunctionalTestCase
 from tracker_tests import StubHubSubscriber
-from xmpp import Tracker
+from xmpp import Tracker, XmppHandler
 
-class PostsHandlerTest(FunctionalTestCase, unittest.TestCase):
-  APPLICATION = main.application
-
-  def test_can_validate_hub_challenges(self):
+class BuzzChatBotFunctionalTestCase(FunctionalTestCase, unittest.TestCase):
+  def _setup_subscription(self):
     sender = 'foo@example.com'
     search_term='somestring'
     body = '/track %s' % search_term
 
-    challenge = 'somechallengetoken'
     hub_subscriber = StubHubSubscriber()
     tracker = Tracker(hub_subscriber=hub_subscriber)
     subscription = tracker.track(sender, body)
+    return subscription
 
+class PostsHandlerTest(BuzzChatBotFunctionalTestCase):
+  APPLICATION = main.application
+
+  def test_can_validate_hub_challenges(self):
+    subscription = self._setup_subscription()
+    challenge = 'somechallengetoken'
     topic = 'https://www.googleapis.com/buzz/v1/activities/track?q=somestring'
     response = self.get('/posts?hub.challenge=%s&hub.mode=%s&hub.topic=%s&id=%s' % (challenge, 'subscribe', topic, subscription.id()))
     self.assertOK(response)
     response.mustcontain(challenge)
+
+class StubMessage(object):
+  def __init__(self):
+    self.sender = 'foo@example.com'
+    self.body = ''
+
+  def reply(self, message_to_send, raw_xml=False):
+    self.message_to_send = message_to_send
+
+
+class XmppHandlerTest(BuzzChatBotFunctionalTestCase):
+  def test_untrack_command_fails_for_missing_subscription_value(self):
+    message = StubMessage()
+    message.body = '/untrack 777'
+    handler = XmppHandler()
+    handler.untrack_command(message=message)
+
+    self.assertTrue('Untrack failed' in message.message_to_send)
+
+  def test_untrack_command_fails_for_missing_subscription_argument(self):
+    subscription = self._setup_subscription()
+    message = StubMessage()
+    handler = XmppHandler()
+    handler.untrack_command(message=message)
+
+    self.assertTrue('Untrack failed' in message.message_to_send)
+
+  def test_untrack_command_fails_for_wrong_subscription_id(self):
+    subscription = self._setup_subscription()
+    id = subscription.id() + 1
+    message = StubMessage()
+    message.body = '/untrack %s' % id
+    handler = XmppHandler()
+    handler.untrack_command(message=message)
+
+    self.assertTrue('Untrack failed' in message.message_to_send)
+
+  def test_untrack_command_succeeds_for_valid_subscription_id(self):
+    subscription = self._setup_subscription()
+    id = subscription.id()
+    message = StubMessage()
+    message.body = '/untrack %s' % id
+    handler = XmppHandler()
+    handler.untrack_command(message=message)
+
+    self.assertTrue('No longer tracking' in message.message_to_send)
+
+  def test_untrack_command_fails_for_other_peoples_valid_subscription_id(self):
+    subscription = self._setup_subscription()
+    id = subscription.id()
+    message = StubMessage()
+    message.sender = 'not' + message.sender
+    message.body = '/untrack %s' % id
+    handler = XmppHandler()
+    handler.untrack_command(message=message)
+
+    self.assertTrue('Untrack failed' in message.message_to_send)
+
+  def test_untrack_command_fails_for_malformed_subscription_id(self):
+    message = StubMessage()
+    message.body = '/untrack jaiku'
+    handler = XmppHandler()
+    handler.untrack_command(message=message)
+
+    self.assertTrue('Untrack failed' in message.message_to_send)
+
+  def test_untrack_command_fails_for_empty_subscription_id(self):
+    message = StubMessage()
+    message.body = '/untrack'
+    handler = XmppHandler()
+    handler.untrack_command(message=message)
+
+    self.assertTrue('Untrack failed' in message.message_to_send)

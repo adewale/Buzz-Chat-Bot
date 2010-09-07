@@ -30,19 +30,17 @@ class Subscription(db.Model):
   def id(self):
     return self.key().id()
 
-  @staticmethod
-  def find(url):
-    """Return a Query object so that the caller can choose how many results should be fetched"""
-    # This query only fetches the key because that's faster and computationally cheaper.
-    query = db.GqlQuery("SELECT __key__ from Subscription where url= :1", url)
-
-    return query
+  def __eq__(self, other):
+    if not other:
+      return False
+    return self.id() == other.id()
 
   @staticmethod
-  def exists(url):
-    """Return True or False to indicate if a subscription with the given url exists"""
-    query = Subscription.find(url)
-    return len(query.fetch(1)) > 0
+  def exists(id):
+    """Return True or False to indicate if a subscription with the given id exists"""
+    if not id:
+      return False
+    return Subscription.get_by_id(int(id)) != None
 
 class Tracker(object):
   def __init__(self, hub_subscriber=pshb.HubSubscriber()):
@@ -55,8 +53,11 @@ class Tracker(object):
     search_term = message_body[len('/track'):]
     return search_term.strip()
 
+  def _extract_sender_email_address(self, message_sender):
+    return message_sender.split('/')[0]
+
   def _subscribe(self, message_sender, message_body):
-    message_sender = message_sender.split('/')[0]
+    message_sender = self._extract_sender_email_address(message_sender)
     search_term = self._extract_search_term(message_body)
     url = self._build_subscription_url(search_term)
     logging.info('Subscribing to: %s for user: %s' % (url, message_sender))
@@ -83,6 +84,37 @@ class Tracker(object):
       return self._subscribe(message_sender, message_body)
     else:
       return None
+
+  def _is_number(self, id):
+    if not id:
+      return False
+    id = id.strip()
+    for char in id:
+      if not char.isdigit():
+        return False
+    return True
+
+  def untrack(self, message_sender, message_body):
+    logging.info('Message is: %s' % message_body)
+    id = message_body[len('/untrack'):]
+    if not self._is_number(id):
+      return None
+
+    id = id.strip()
+    subscription = Subscription.get_by_id(int(id))
+    logging.info('Subscripton: %s' % str(subscription))
+    if not subscription:
+      return None
+
+    if subscription.subscriber != self._extract_sender_email_address(message_sender):
+      return None
+    subscription.delete()
+
+    callback_url = self._build_callback_url(subscription)
+    logging.info('Callback URL was: %s' % callback_url)
+    self.hub_subscriber.unsubscribe(subscription.url, 'http://pubsubhubbub.appspot.com/', callback_url)
+    return subscription
+
 
 commands = [
   '/help Prints out this message\n',
@@ -141,14 +173,25 @@ class XmppHandler(xmpp_handlers.CommandHandler):
     logging.info('Received message from: %s' % message.sender)
 
     tracker = Tracker()
-    message_builder = MessageBuilder()
     subscription = tracker.track(message.sender, message.body)
-    if (subscription):
-      message_builder.add('Tracking: %s with URL: %s' % (subscription.search_term, subscription.url))
-      self._reply(message_builder, message)
+    message_builder = MessageBuilder()
+    if subscription:
+      message_builder.add('Tracking: %s with id: %s' % (subscription.search_term, subscription.id()))
     else:
       message_builder.add('Sorry there was a problem with your last track command <%s>' % message.body)
-      self._reply(message_builder, message)
+    self._reply(message_builder, message)
+
+  def untrack_command(self, message=None):
+    logging.info('Received message from: %s' % message.sender)
+
+    tracker = Tracker()
+    subscription = tracker.untrack(message.sender, message.body)
+    message_builder = MessageBuilder()
+    if subscription:
+      message_builder.add('No longer tracking: %s with id: %s' % (subscription.search_term, subscription.id()))
+    else:
+      message_builder.add('Untrack failed. That subscription does not exist for you')
+    self._reply(message_builder, message)
 
 def send_posts(posts, subscriber, search_term):
   message_builder = MessageBuilder()

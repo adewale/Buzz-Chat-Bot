@@ -149,16 +149,15 @@ class PostsHandler(webapp.RequestHandler):
 
   def get(self):
     """Show all the resources in this collection"""
-    subscription = self._get_subscription()
-    subscriber = subscription.subscriber
-    search_term = subscription.search_term
-    logging.info('Request was made for: %s on search: %s' % (subscriber, search_term))
+    logging.info("Headers were: %s" % str(self.request.headers))
+    logging.info('Request: %s' % str(self.request))
     logging.info("New content: %s" % self.request.body)
+    id = self.request.get('id')
 
     # If this is a hub challenge
     if self.request.get('hub.challenge'):
-    # If this is a subscription and the url is one we have in our database
-      if self.request.get('hub.mode') == "subscribe" and xmpp.Subscription.exists(self.request.get('hub.topic')):
+    # If this subscription exists
+      if self.request.get('hub.mode') == "subscribe" and xmpp.Subscription.get_by_id(int(id)):
         self.response.out.write(self.request.get('hub.challenge'))
         logging.info("Successfully accepted challenge for feed: %s" % self.request.get('hub.topic'))
       else:
@@ -170,12 +169,14 @@ class PostsHandler(webapp.RequestHandler):
 
   def post(self):
     """Create a new resource in this collection"""
-    subscription = self._get_subscription()
+    logging.info("Headers were: %s" % str(self.request.headers))
+    logging.info('Request: %s' % str(self.request))
+    logging.info("New content: %s" % self.request.body)
+    id = self.request.get('id')
+
+    subscription = xmpp.Subscription.get_by_id(int(id))
     subscriber = subscription.subscriber
     search_term = subscription.search_term
-    logging.info('Request was made for: %s on search: %s' % (subscriber, search_term))
-    logging.info("New content: %s" % self.request.body)
-    logging.info("Headers were: %s" % str(self.request.headers))
     parser = pshb.ContentParser(self.request.body, settings.DEFAULT_HUB, settings.ALWAYS_USE_DEFAULT_HUB)
     url = parser.extractFeedUrl()
 

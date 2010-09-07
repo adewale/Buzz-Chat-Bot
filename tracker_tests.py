@@ -21,6 +21,9 @@ class StubHubSubscriber(pshb.HubSubscriber):
   def subscribe(self, url, hub, callback_url):
     self.callback_url = callback_url
 
+  def unsubscribe(self, url, hub, callback_url):
+    self.callback_url = callback_url
+
 class TrackerTest(unittest.TestCase):
   def test_tracker_rejects_empty_search_term(self):
     sender = 'foo@example.com'
@@ -73,10 +76,11 @@ class TrackerTest(unittest.TestCase):
     sender = 'foo@example.com'
     search_term='somestring'
     body = '/track %s' % search_term
-    tracker = Tracker()
 
-    tracker.track(sender, body)
+    tracker = Tracker()
+    subscription = tracker.track(sender, body)
     self.assertEquals(1, len(Subscription.all().fetch(100)))
+    self.assertEquals(subscription, Subscription.all().fetch(1)[0])
 
   def test_tracker_subscribes_with_callback_url_that_identifies_subscriber_and_query(self):
     sender = 'foo@example.com'
@@ -113,3 +117,30 @@ class TrackerTest(unittest.TestCase):
 
     expected_callback_url = 'http://%s.appspot.com/posts?id=%s' % (settings.APP_NAME, subscription.id())
     self.assertEquals(expected_callback_url, hub_subscriber.callback_url)
+
+  def test_tracker_rejects_invalid_id_for_untracking(self):
+    self._delete_all_subscriptions()
+    sender = 'foo@example.com/Adium380DADCD'
+    body = '/untrack 1'
+
+    hub_subscriber = StubHubSubscriber()
+    tracker = Tracker(hub_subscriber=hub_subscriber)
+    subscription = tracker.untrack(sender, body)
+    self.assertEquals(None, subscription)
+
+  def test_tracker_untracks_valid_id(self):
+    self._delete_all_subscriptions()
+
+    sender = 'foo@example.com/Adium380DADCD'
+    search_term='somestring'
+    body = '/track %s' % search_term
+
+    hub_subscriber = StubHubSubscriber()
+    tracker = Tracker(hub_subscriber=hub_subscriber)
+    track_subscription = tracker.track(sender, body)
+
+    body = '/untrack %s' % track_subscription.id()
+    untrack_subscription = tracker.untrack(sender, body)
+    self.assertEquals(track_subscription, untrack_subscription)
+    self.assertFalse(Subscription.exists(track_subscription.id()))
+    self.assertEquals('http://buzzchatbot.appspot.com/posts?id=%s' % track_subscription.id(), hub_subscriber.callback_url)
