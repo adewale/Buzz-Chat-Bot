@@ -25,7 +25,10 @@ import settings
 class Subscription(db.Model):
   url = db.StringProperty(required=True)
   search_term = db.StringProperty(required=True)
-  callback_url = db.StringProperty(required=True)
+  subscriber = db.StringProperty()
+
+  def id(self):
+    return self.key().id()
 
   @staticmethod
   def find(url):
@@ -53,22 +56,23 @@ class Tracker(object):
     return search_term.strip()
 
   def _subscribe(self, message_sender, message_body):
+    message_sender = message_sender.split('/')[0]
     search_term = self._extract_search_term(message_body)
     url = self._build_subscription_url(search_term)
     logging.info('Subscribing to: %s for user: %s' % (url, message_sender))
 
-    callback_url = self._build_callback_url(message_sender, search_term)
+    subscription = Subscription(url=url, search_term=search_term, subscriber=message_sender)
+    db.put(subscription)
+
+    callback_url = self._build_callback_url(subscription)
+
     logging.info('Callback URL was: %s' % callback_url)
     self.hub_subscriber.subscribe(url, 'http://pubsubhubbub.appspot.com/', callback_url)
 
-    subscription = Subscription(url=url, search_term=search_term, callback_url=callback_url)
-    db.put(subscription)
     return subscription
 
-  def _build_callback_url(self, message_sender, search_term):
-    message_sender = message_sender.split('/')[0]
-    search_term = urllib.quote(search_term)
-    return "http://%s.appspot.com/posts?track_subscriber=%s&search_term=%s" % (settings.APP_NAME, message_sender, search_term)
+  def _build_callback_url(self, subscription):
+    return "http://%s.appspot.com/posts?id=%s" % (settings.APP_NAME, subscription.id())
 
   def _build_subscription_url(self, search_term):
     search_term = urllib.quote(search_term)

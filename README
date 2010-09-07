@@ -2,17 +2,37 @@ This is an experimental jaiku-style chat bot for Google Buzz.
 If it breaks you get to keep both pieces.
 
 What does it do?
+================
 At the moment it lets you ask for:
 /help : get help
 /track [some search term] : which will send you notifications of matching Buzz posts. 
 *WARNING: untrack is not currently implemented*
 
+What does it require?
+=====================
+App Engine
+Python
 
-TESTS
-====
-The tests required Nose and NoseGae.
+
+Tests
+=====
+To run the tests you need gae-testbed, nose and nose-gae. So...
+sudo easy_install gaetestbed
+sudo easy_install nose
+sudo easy_install nosegae
+
 They can be run like this:
 nosetests --with-gae tracker_tests.py
 
 Although I prefer to do something like this:
 nosetests --with-gae *test*py
+
+
+INSTALLATION
+This isn't yet ready for installation by people who don't feel like changing the Python code. However if you feel brave you should:
+- Register an AppEngine application at http://appengine.google.com/start/createapp?
+- Change the app.yaml file to have the same Application Identifier as your application.
+- Change the APP_NAME constant to have the same Application Identifier as your application.
+- Change the SECRET_TOKEN from the default
+- Take a look at settings.py to see if there's anything else there you want to change
+- Use the Google App Engine Launcher: http://code.google.com/appengine/downloads.html#Google_App_Engine_SDK_for_Python to deploy the application.

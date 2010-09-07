@@ -85,9 +85,9 @@ class TrackerTest(unittest.TestCase):
 
     hub_subscriber = StubHubSubscriber()
     tracker = Tracker(hub_subscriber=hub_subscriber)
-    tracker.track(sender, body)
+    subscription = tracker.track(sender, body)
 
-    expected_callback_url = 'http://%s.appspot.com/posts?track_subscriber=%s&search_term=%s' % (settings.APP_NAME, sender, search_term)
+    expected_callback_url = 'http://%s.appspot.com/posts?id=%s' % (settings.APP_NAME, subscription.id())
     self.assertEquals(expected_callback_url, hub_subscriber.callback_url)
 
   def test_tracker_subscribes_with_urlencoded_callback_url(self):
@@ -97,9 +97,9 @@ class TrackerTest(unittest.TestCase):
 
     hub_subscriber = StubHubSubscriber()
     tracker = Tracker(hub_subscriber=hub_subscriber)
-    tracker.track(sender, body)
+    subscription = tracker.track(sender, body)
 
-    expected_callback_url = 'http://' + settings.APP_NAME + '.appspot.com/posts?track_subscriber=' + sender + '&search_term=some%20string'
+    expected_callback_url = 'http://%s.appspot.com/posts?id=%s' % (settings.APP_NAME, subscription.id())
     self.assertEquals(expected_callback_url, hub_subscriber.callback_url)
 
   def test_tracker_subscribes_with_callback_url_that_identifies_subscriber_and_query_without_xmpp_client_identifier(self):
@@ -109,7 +109,7 @@ class TrackerTest(unittest.TestCase):
 
     hub_subscriber = StubHubSubscriber()
     tracker = Tracker(hub_subscriber=hub_subscriber)
-    tracker.track(sender, body)
+    subscription = tracker.track(sender, body)
 
-    expected_callback_url = 'http://%s.appspot.com/posts?track_subscriber=%s&search_term=%s' % (settings.APP_NAME, 'foo@example.com', search_term)
+    expected_callback_url = 'http://%s.appspot.com/posts?id=%s' % (settings.APP_NAME, subscription.id())
     self.assertEquals(expected_callback_url, hub_subscriber.callback_url)

@@ -140,13 +140,21 @@ class ProfileViewingHandler(webapp.RequestHandler):
 
 
 class PostsHandler(webapp.RequestHandler):
+  def _get_subscription(self):
+    logging.info("Headers were: %s" % str(self.request.headers))
+    logging.info('Request: %s' % str(self.request))
+    id = self.request.get('id')
+    subscription = xmpp.Subscription.get_by_id(int(id))
+    return subscription
+
   def get(self):
     """Show all the resources in this collection"""
-    subscriber = self.request.get('track_subscriber')
-    search_term = self.request.get('search_term')
+    subscription = self._get_subscription()
+    subscriber = subscription.subscriber
+    search_term = subscription.search_term
     logging.info('Request was made for: %s on search: %s' % (subscriber, search_term))
     logging.info("New content: %s" % self.request.body)
-    logging.info("Headers were: %s" % str(self.request.headers))
+
     # If this is a hub challenge
     if self.request.get('hub.challenge'):
     # If this is a subscription and the url is one we have in our database
@@ -162,8 +170,9 @@ class PostsHandler(webapp.RequestHandler):
 
   def post(self):
     """Create a new resource in this collection"""
-    subscriber = self.request.get('track_subscriber')
-    search_term = self.request.get('search_term')
+    subscription = self._get_subscription()
+    subscriber = subscription.subscriber
+    search_term = subscription.search_term
     logging.info('Request was made for: %s on search: %s' % (subscriber, search_term))
     logging.info("New content: %s" % self.request.body)
     logging.info("Headers were: %s" % str(self.request.headers))
