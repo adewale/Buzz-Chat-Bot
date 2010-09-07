@@ -42,6 +42,14 @@ class Subscription(db.Model):
       return False
     return Subscription.get_by_id(int(id)) != None
 
+def extract_sender_email_address(message_sender):
+    return message_sender.split('/')[0]
+
+def reply(message_builder, message):
+  message_to_send = message_builder.build_message()
+  logging.info('Message that will be sent: %s' % message_to_send)
+  message.reply(message_to_send, raw_xml=True)
+
 class Tracker(object):
   def __init__(self, hub_subscriber=pshb.HubSubscriber()):
     self.hub_subscriber =  hub_subscriber
@@ -53,11 +61,8 @@ class Tracker(object):
     search_term = message_body[len('/track'):]
     return search_term.strip()
 
-  def _extract_sender_email_address(self, message_sender):
-    return message_sender.split('/')[0]
-
   def _subscribe(self, message_sender, message_body):
-    message_sender = self._extract_sender_email_address(message_sender)
+    message_sender = extract_sender_email_address(message_sender)
     search_term = self._extract_search_term(message_body)
     url = self._build_subscription_url(search_term)
     logging.info('Subscribing to: %s for user: %s' % (url, message_sender))
@@ -106,7 +111,7 @@ class Tracker(object):
     if not subscription:
       return None
 
-    if subscription.subscriber != self._extract_sender_email_address(message_sender):
+    if subscription.subscriber != extract_sender_email_address(message_sender):
       return None
     subscription.delete()
 
@@ -115,12 +120,6 @@ class Tracker(object):
     self.hub_subscriber.unsubscribe(subscription.url, 'http://pubsubhubbub.appspot.com/', callback_url)
     return subscription
 
-
-commands = [
-  '/help Prints out this message\n',
-  '/track [search term] Starts tracking the given search term and returns the id for your subscription\n'
-  '/untrack [id] Removes your subscription for that id\n'
-]
 
 class MessageBuilder(object):
   def __init__(self):
@@ -153,11 +152,14 @@ class MessageBuilder(object):
     text = '''%s matched: <a href='%s'>%s</a>''' % (search_term, post.url, post.title)
     return self._build_raw_message(text)
 
+commands = [
+    '/help Prints out this message\n',
+    '/track [search term] Starts tracking the given search term and returns the id for your subscription\n'
+    '/untrack [id] Removes your subscription for that id\n'
+    '/list Lists all search terms and ids currently being tracked by you'
+]
+
 class XmppHandler(xmpp_handlers.CommandHandler):
-  def _reply(self, message_builder, message):
-    message_to_send = message_builder.build_message()
-    logging.info('Message that will be sent: %s' % message_to_send)
-    message.reply(message_to_send, raw_xml=True)
 
   def help_command(self, message=None):
     logging.info('Received message from: %s' % message.sender)
@@ -168,7 +170,7 @@ class XmppHandler(xmpp_handlers.CommandHandler):
     message_builder = MessageBuilder()
     for line in lines:
       message_builder.add(line)
-    self._reply(message_builder, message)
+    reply(message_builder, message)
 
   def track_command(self, message=None):
     logging.info('Received message from: %s' % message.sender)
@@ -180,7 +182,7 @@ class XmppHandler(xmpp_handlers.CommandHandler):
       message_builder.add('Tracking: %s with id: %s' % (subscription.search_term, subscription.id()))
     else:
       message_builder.add('Sorry there was a problem with your last track command <%s>' % message.body)
-    self._reply(message_builder, message)
+    reply(message_builder, message)
 
   def untrack_command(self, message=None):
     logging.info('Received message from: %s' % message.sender)
@@ -192,7 +194,16 @@ class XmppHandler(xmpp_handlers.CommandHandler):
       message_builder.add('No longer tracking: %s with id: %s' % (subscription.search_term, subscription.id()))
     else:
       message_builder.add('Untrack failed. That subscription does not exist for you')
-    self._reply(message_builder, message)
+    reply(message_builder, message)
+
+  def list_command(self, message=None):
+    logging.info('Received message from: %s' % message.sender)
+    message_builder = MessageBuilder()
+    sender = extract_sender_email_address(message.sender)
+    logging.info('Sender: %s' % sender)
+    for subscription in Subscription.gql('WHERE subscriber = :1', sender):
+      message_builder.add('Search term: %s with id: %s' % (subscription.search_term, subscription.id()))
+    reply(message_builder, message)
 
 def send_posts(posts, subscriber, search_term):
   message_builder = MessageBuilder()
