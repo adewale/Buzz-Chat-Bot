@@ -118,7 +118,8 @@ class Tracker(object):
 
 commands = [
   '/help Prints out this message\n',
-  '/track [search term] Starts tracking the given search term\n'
+  '/track [search term] Starts tracking the given search term and returns the id for your subscription\n'
+  '/untrack [id] Removes your subscription for that id\n'
 ]
 
 class MessageBuilder(object):
