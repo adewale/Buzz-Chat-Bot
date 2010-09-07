@@ -1,3 +1,18 @@
+This is an experimental jaiku-style chat bot for Google Buzz.
+If it breaks you get to keep both pieces.
+
+What does it do?
+At the moment it lets you ask for:
+/help : get help
+/track [some search term] : which will send you notifications of matching Buzz posts. 
+*WARNING: untrack is not currently implemented*
+
+
+TESTS
+====
 The tests required Nose and NoseGae.
 They can be run like this:
 nosetests --with-gae tracker_tests.py
+
+Although I prefer to do something like this:
+nosetests --with-gae *test*py
