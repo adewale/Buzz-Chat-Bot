@@ -95,9 +95,6 @@ class TrackerTest(unittest.TestCase):
     search_term='some string'
     body = '/track %s' % search_term
 
-    class StubHubSubscriber(pshb.HubSubscriber):
-      def subscribe(self, url, hub, callback_url):
-        self.callback_url = callback_url
     hub_subscriber = StubHubSubscriber()
     tracker = Tracker(hub_subscriber=hub_subscriber)
     tracker.track(sender, body)
@@ -110,9 +107,6 @@ class TrackerTest(unittest.TestCase):
     search_term='somestring'
     body = '/track %s' % search_term
 
-    class StubHubSubscriber(pshb.HubSubscriber):
-      def subscribe(self, url, hub, callback_url):
-        self.callback_url = callback_url
     hub_subscriber = StubHubSubscriber()
     tracker = Tracker(hub_subscriber=hub_subscriber)
     tracker.track(sender, body)
