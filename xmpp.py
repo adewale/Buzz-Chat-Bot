@@ -126,9 +126,7 @@ class MessageBuilder(object):
     self.lines = []
 
   def _build_raw_message(self, text):
-    message = '''<html xmlns='http://jabber.org/protocol/xhtml-im'>
-    <body xmlns="http://www.w3.org/1999/xhtml">
-    %s
+    message = '''<html xmlns='http://jabber.org/protocol/xhtml-im'><body xmlns="http://www.w3.org/1999/xhtml">%s
     </body>
     </html>''' % text
     message = message.strip()

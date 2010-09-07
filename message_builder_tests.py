@@ -38,9 +38,7 @@ class MessageBuilderTest(unittest.TestCase):
     message_builder = MessageBuilder()
     message_builder.add(text)
     message = message_builder.build_message()
-    expected = '''<html xmlns='http://jabber.org/protocol/xhtml-im'>
-    <body xmlns="http://www.w3.org/1999/xhtml">
-    %s
+    expected = '''<html xmlns='http://jabber.org/protocol/xhtml-im'><body xmlns="http://www.w3.org/1999/xhtml">%s
     </body>
     </html>''' % text
     self.assertEquals(expected, message)
@@ -48,16 +46,13 @@ class MessageBuilderTest(unittest.TestCase):
 
   def test_builds_valid_message_for_track_message(self):
     # Note that this can easily become </track> if we use <> for messages
-    text = '</track>'
     message_builder = MessageBuilder()
-    message_builder.add(text)
+    message_builder.add('</track>')
     message = message_builder.build_message()
-    expected = '''<html xmlns='http://jabber.org/protocol/xhtml-im'>
-    <body xmlns="http://www.w3.org/1999/xhtml">
-    %s
+    expected = '''<html xmlns='http://jabber.org/protocol/xhtml-im'><body xmlns="http://www.w3.org/1999/xhtml">%s
     </body>
-    </html>''' % text
-    #self.assertEquals(expected, message)
+    </html>''' % '&lt;/track&gt;'
+    self.assertEquals(expected, message)
     self.assertValid(message)
 
   def test_builds_valid_message_for_list(self):
@@ -66,9 +61,7 @@ class MessageBuilderTest(unittest.TestCase):
     for item in items:
       message_builder.add(item)
     message = message_builder.build_message()
-    expected = '''<html xmlns='http://jabber.org/protocol/xhtml-im'>
-    <body xmlns="http://www.w3.org/1999/xhtml">
-    1<br></br>2<br></br>3
+    expected = '''<html xmlns='http://jabber.org/protocol/xhtml-im'><body xmlns="http://www.w3.org/1999/xhtml">1<br></br>2<br></br>3
     </body>
     </html>'''
     self.assertEquals(expected, message)
@@ -86,9 +79,7 @@ class MessageBuilderTest(unittest.TestCase):
     post = pshb.PostFactory.createPost(url, feedUrl, title, content, date_published, author, entry)
     message_builder = MessageBuilder()
     message = message_builder.build_message_from_post(post, search_term)
-    expected = '''<html xmlns='http://jabber.org/protocol/xhtml-im'>
-    <body xmlns="http://www.w3.org/1999/xhtml">
-    %s matched: <a href='%s'>%s</a>
+    expected = '''<html xmlns='http://jabber.org/protocol/xhtml-im'><body xmlns="http://www.w3.org/1999/xhtml">%s matched: <a href='%s'>%s</a>
     </body>
     </html>''' % (search_term, url, title)
     self.assertEquals(expected, message)
