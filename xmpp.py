@@ -136,7 +136,8 @@ commands = [
     '/help Prints out this message',
     '/track [search term] Starts tracking the given search term and returns the id for your subscription',
     '/untrack [id] Removes your subscription for that id',
-    '/list Lists all search terms and ids currently being tracked by you'
+    '/list Lists all search terms and ids currently being tracked by you',
+    '/about Tells you which instance of the Buzz Chat Bot you are using'
 ]
 
 class XmppHandler(xmpp_handlers.CommandHandler):
@@ -185,6 +186,12 @@ class XmppHandler(xmpp_handlers.CommandHandler):
       message_builder.add('Search term: %s with id: %s' % (subscription.search_term, subscription.id()))
     else:
       message_builder.add('No subscriptions')
+    reply(message_builder, message)
+
+  def about_command(self, message):
+    logging.info('Received message from: %s' % message.sender)
+    message_builder = MessageBuilder()
+    message_builder.add('Welcome to %s@appspot.com. A bot for Google Buzz. Find out more at: http://%s.appspot.com' % (settings.APP_NAME, settings.APP_NAME))
     reply(message_builder, message)
 
 

@@ -19,6 +19,7 @@ from gaetestbed import FunctionalTestCase
 from tracker_tests import StubHubSubscriber
 from xmpp import Tracker, XmppHandler
 import logging
+import settings
 
 class BuzzChatBotFunctionalTestCase(FunctionalTestCase, unittest.TestCase):
   def _setup_subscription(self, sender='foo@example.com',search_term='somestring'):
@@ -131,4 +132,12 @@ class XmppHandlerTest(BuzzChatBotFunctionalTestCase):
     handler.list_command(message=message)
     expected_item = 'No subscriptions'
     self.assertTrue(len(message.message_to_send) > 0)
+    self.assertTrue(expected_item in message.message_to_send, message.message_to_send)
+
+  def test_about_command_says_what_bot_is_running(self):
+    handler = XmppHandler()
+    sender = '1@example.com'
+    message = StubMessage(sender=sender, body='/about')
+    handler.about_command(message=message)
+    expected_item = 'Welcome to %s@appspot.com. A bot for Google Buzz' % settings.APP_NAME
     self.assertTrue(expected_item in message.message_to_send, message.message_to_send)
