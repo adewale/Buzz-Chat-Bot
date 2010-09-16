@@ -154,6 +154,7 @@ class PostsHandler(webapp.RequestHandler):
     logging.info("New content: %s" % self.request.body)
     id = self.request.get('id')
 
+    # TODO(ade) Must also correctly handle unsubscription
     # If this is a hub challenge
     if self.request.get('hub.challenge'):
     # If this subscription exists

@@ -173,7 +173,7 @@ class XmppHandler(xmpp_handlers.CommandHandler):
     if subscription:
       message_builder.add('No longer tracking: %s with id: %s' % (subscription.search_term, subscription.id()))
     else:
-      message_builder.add('Untrack failed. That subscription does not exist for you')
+      message_builder.add('Untrack failed. That subscription does not exist for you. Remember the syntax is: /untrack [id]')
     reply(message_builder, message)
 
   def list_command(self, message=None):
@@ -183,6 +183,8 @@ class XmppHandler(xmpp_handlers.CommandHandler):
     logging.info('Sender: %s' % sender)
     for subscription in Subscription.gql('WHERE subscriber = :1', sender):
       message_builder.add('Search term: %s with id: %s' % (subscription.search_term, subscription.id()))
+    else:
+      message_builder.add('No subscriptions')
     reply(message_builder, message)
 
 

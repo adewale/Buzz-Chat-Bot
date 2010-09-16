@@ -56,7 +56,7 @@ class XmppHandlerTest(BuzzChatBotFunctionalTestCase):
     handler = XmppHandler()
     handler.untrack_command(message=message)
 
-    self.assertTrue('Untrack failed' in message.message_to_send)
+    self.assertTrue('Untrack failed' in message.message_to_send, message.message_to_send)
 
   def test_untrack_command_fails_for_missing_subscription_argument(self):
     subscription = self._setup_subscription()
@@ -64,7 +64,7 @@ class XmppHandlerTest(BuzzChatBotFunctionalTestCase):
     handler = XmppHandler()
     handler.untrack_command(message=message)
 
-    self.assertTrue('Untrack failed' in message.message_to_send)
+    self.assertTrue('Untrack failed' in message.message_to_send, message.message_to_send)
 
   def test_untrack_command_fails_for_wrong_subscription_id(self):
     subscription = self._setup_subscription()
@@ -73,7 +73,7 @@ class XmppHandlerTest(BuzzChatBotFunctionalTestCase):
     handler = XmppHandler()
     handler.untrack_command(message=message)
 
-    self.assertTrue('Untrack failed' in message.message_to_send)
+    self.assertTrue('Untrack failed' in message.message_to_send, message.message_to_send)
 
   def test_untrack_command_succeeds_for_valid_subscription_id(self):
     subscription = self._setup_subscription()
@@ -82,7 +82,7 @@ class XmppHandlerTest(BuzzChatBotFunctionalTestCase):
     handler = XmppHandler()
     handler.untrack_command(message=message)
 
-    self.assertTrue('No longer tracking' in message.message_to_send)
+    self.assertTrue('No longer tracking' in message.message_to_send, message.message_to_send)
 
   def test_untrack_command_fails_for_other_peoples_valid_subscription_id(self):
     subscription = self._setup_subscription()
@@ -91,21 +91,21 @@ class XmppHandlerTest(BuzzChatBotFunctionalTestCase):
     handler = XmppHandler()
     handler.untrack_command(message=message)
 
-    self.assertTrue('Untrack failed' in message.message_to_send)
+    self.assertTrue('Untrack failed' in message.message_to_send, message.message_to_send)
 
   def test_untrack_command_fails_for_malformed_subscription_id(self):
     message = StubMessage(body='/untrack jaiku')
     handler = XmppHandler()
     handler.untrack_command(message=message)
 
-    self.assertTrue('Untrack failed' in message.message_to_send)
+    self.assertTrue('Untrack failed' in message.message_to_send, message.message_to_send)
 
   def test_untrack_command_fails_for_empty_subscription_id(self):
     message = StubMessage(body='/untrack')
     handler = XmppHandler()
     handler.untrack_command(message=message)
 
-    self.assertTrue('Untrack failed' in message.message_to_send)
+    self.assertTrue('Untrack failed' in message.message_to_send, message.message_to_send)
 
   def test_list_command_lists_existing_search_terms_and_ids_for_each_user(self):
     sender1 = '1@example.com'
@@ -122,4 +122,13 @@ class XmppHandlerTest(BuzzChatBotFunctionalTestCase):
       self.assertTrue(str(subscription.id()) in message.message_to_send)
 
       expected_item = 'Search term: %s with id: %s' % (subscription.search_term, subscription.id())
-      self.assertTrue(expected_item in message.message_to_send, expected_item)
+      self.assertTrue(expected_item in message.message_to_send, message.message_to_send)
+
+  def test_list_command_can_handle_empty_set_of_search_terms(self):
+    handler = XmppHandler()
+    sender = '1@example.com'
+    message = StubMessage(sender=sender, body='/list')
+    handler.list_command(message=message)
+    expected_item = 'No subscriptions'
+    self.assertTrue(len(message.message_to_send) > 0)
+    self.assertTrue(expected_item in message.message_to_send, message.message_to_send)
