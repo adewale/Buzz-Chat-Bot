@@ -42,13 +42,6 @@ class Subscription(db.Model):
       return False
     return Subscription.get_by_id(int(id)) != None
 
-def extract_sender_email_address(message_sender):
-    return message_sender.split('/')[0]
-
-def reply(message_builder, message):
-  message_to_send = message_builder.build_message()
-  logging.info('Message that will be sent: %s' % message_to_send)
-  message.reply(message_to_send, raw_xml=True)
 
 class Tracker(object):
   def __init__(self, hub_subscriber=pshb.HubSubscriber()):
@@ -125,34 +118,24 @@ class MessageBuilder(object):
   def __init__(self):
     self.lines = []
 
-  def _build_raw_message(self, text):
-    message = '''<html xmlns='http://jabber.org/protocol/xhtml-im'><body xmlns="http://www.w3.org/1999/xhtml">%s
-    </body>
-    </html>''' % text
-    message = message.strip()
-    message = message.encode('ascii', 'xmlcharrefreplace')
-    return message
-
   def build_message(self):
     text = ''
     for index,line in enumerate(self.lines):
-      text += html.escape(line)
+      text += line
       if (index+1) < len(self.lines):
-        text += '<br></br>'
-
-    return self._build_raw_message(text)
+        text += '\n'
+    return text
 
   def add(self, line):
     self.lines.append(line)
 
   def build_message_from_post(self, post, search_term):
-    text = '''%s matched: <a href='%s'>%s</a>''' % (search_term, post.url, post.title)
-    return self._build_raw_message(text)
+    return '''[%s] matched post: [%s] with URL: [%s]''' % (search_term, post.title, post.url)
 
 commands = [
-    '/help Prints out this message\n',
-    '/track [search term] Starts tracking the given search term and returns the id for your subscription\n',
-    '/untrack [id] Removes your subscription for that id\n',
+    '/help Prints out this message',
+    '/track [search term] Starts tracking the given search term and returns the id for your subscription',
+    '/untrack [id] Removes your subscription for that id',
     '/list Lists all search terms and ids currently being tracked by you'
 ]
 
@@ -202,7 +185,16 @@ class XmppHandler(xmpp_handlers.CommandHandler):
       message_builder.add('Search term: %s with id: %s' % (subscription.search_term, subscription.id()))
     reply(message_builder, message)
 
+
+def extract_sender_email_address(message_sender):
+    return message_sender.split('/')[0]
+
+def reply(message_builder, message):
+  message_to_send = message_builder.build_message()
+  logging.info('Message that will be sent: %s' % message_to_send)
+  message.reply(message_to_send, raw_xml=False)
+
 def send_posts(posts, subscriber, search_term):
   message_builder = MessageBuilder()
   for post in posts:
-    xmpp.send_message(subscriber, message_builder.build_message_from_post(post, search_term), raw_xml=True)
+    xmpp.send_message(subscriber, message_builder.build_message_from_post(post, search_term), raw_xml=False)

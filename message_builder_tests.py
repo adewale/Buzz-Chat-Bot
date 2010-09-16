@@ -19,41 +19,20 @@ import pshb
 import feedparser
 
 class MessageBuilderTest(unittest.TestCase):
-  def assertValid(self, string):
-    self.assertTrue('<body' in string, 'Did not contain required string <body')
-    self.assertTrue('</body>' in string, 'Did not contain required string </body>')
-
-    parser = make_parser()
-    parser.setFeature(handler.feature_namespaces,True)
-    parser.setContentHandler(handler.ContentHandler())
-
-    import StringIO
-    f = StringIO.StringIO(string)
-
-    # This will raise an exception if the string is invalid
-    parser.parse(f)
     
   def test_builds_valid_message_for_simple_string(self):
     text = 'Tracking: some complex search'
     message_builder = MessageBuilder()
     message_builder.add(text)
     message = message_builder.build_message()
-    expected = '''<html xmlns='http://jabber.org/protocol/xhtml-im'><body xmlns="http://www.w3.org/1999/xhtml">%s
-    </body>
-    </html>''' % text
-    self.assertEquals(expected, message)
-    self.assertValid(message)
+    self.assertEquals(text, message)
 
   def test_builds_valid_message_for_track_message(self):
-    # Note that this can easily become </track> if we use <> for messages
     message_builder = MessageBuilder()
     message_builder.add('</track>')
     message = message_builder.build_message()
-    expected = '''<html xmlns='http://jabber.org/protocol/xhtml-im'><body xmlns="http://www.w3.org/1999/xhtml">%s
-    </body>
-    </html>''' % '&lt;/track&gt;'
+    expected = '%s' % '</track>'
     self.assertEquals(expected, message)
-    self.assertValid(message)
 
   def test_builds_valid_message_for_list(self):
     items = ['1', '2', '3', '4']
@@ -61,11 +40,8 @@ class MessageBuilderTest(unittest.TestCase):
     for item in items:
       message_builder.add(item)
     message = message_builder.build_message()
-    expected = '''<html xmlns='http://jabber.org/protocol/xhtml-im'><body xmlns="http://www.w3.org/1999/xhtml">1<br></br>2<br></br>3<br></br>4
-    </body>
-    </html>'''
+    expected = '1\n2\n3\n4'
     self.assertEquals(expected, message)
-    self.assertValid(message)
 
   def test_builds_valid_message_for_post(self):
     search_term = 'some search'
@@ -79,8 +55,5 @@ class MessageBuilderTest(unittest.TestCase):
     post = pshb.PostFactory.createPost(url, feedUrl, title, content, date_published, author, entry)
     message_builder = MessageBuilder()
     message = message_builder.build_message_from_post(post, search_term)
-    expected = '''<html xmlns='http://jabber.org/protocol/xhtml-im'><body xmlns="http://www.w3.org/1999/xhtml">%s matched: <a href='%s'>%s</a>
-    </body>
-    </html>''' % (search_term, url, title)
+    expected = '[%s] matched post: [%s] with URL: [%s]' % (search_term, title, url)
     self.assertEquals(expected, message)
-    self.assertValid(message)

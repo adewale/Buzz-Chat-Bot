@@ -175,6 +175,12 @@ class PostsHandler(webapp.RequestHandler):
     id = self.request.get('id')
 
     subscription = xmpp.Subscription.get_by_id(int(id))
+    if not subscription:
+      self.response.set_status(404)
+      self.response.out.write("No such subscription")
+      logging.warning('No subscription for %s' % id)
+      return
+
     subscriber = subscription.subscriber
     search_term = subscription.search_term
     parser = pshb.ContentParser(self.request.body, settings.DEFAULT_HUB, settings.ALWAYS_USE_DEFAULT_HUB)
