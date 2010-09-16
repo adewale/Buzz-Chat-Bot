@@ -143,4 +143,4 @@ class TrackerTest(unittest.TestCase):
     untrack_subscription = tracker.untrack(sender, body)
     self.assertEquals(track_subscription, untrack_subscription)
     self.assertFalse(Subscription.exists(track_subscription.id()))
-    self.assertEquals('http://buzzchatbot.appspot.com/posts?id=%s' % track_subscription.id(), hub_subscriber.callback_url)
+    self.assertEquals('http://%s.appspot.com/posts?id=%s' % (settings.APP_NAME, track_subscription.id()), hub_subscriber.callback_url)
