@@ -34,11 +34,20 @@ class BuzzChatBotFunctionalTestCase(FunctionalTestCase, unittest.TestCase):
 class PostsHandlerTest(BuzzChatBotFunctionalTestCase):
   APPLICATION = main.application
 
-  def test_can_validate_hub_challenges(self):
+  def test_can_validate_hub_challenge_for_subscribe(self):
     subscription = self._setup_subscription()
     challenge = 'somechallengetoken'
     topic = 'https://www.googleapis.com/buzz/v1/activities/track?q=somestring'
     response = self.get('/posts?hub.challenge=%s&hub.mode=%s&hub.topic=%s&id=%s' % (challenge, 'subscribe', topic, subscription.id()))
+    self.assertOK(response)
+    response.mustcontain(challenge)
+
+  def test_can_validate_hub_challenge_for_unsubscribe(self):
+    subscription = self._setup_subscription()
+    subscription.delete()
+    challenge = 'somechallengetoken'
+    topic = 'https://www.googleapis.com/buzz/v1/activities/track?q=somestring'
+    response = self.get('/posts?hub.challenge=%s&hub.mode=%s&hub.topic=%s&id=%s' % (challenge, 'unsubscribe', topic, subscription.id()))
     self.assertOK(response)
     response.mustcontain(challenge)
 

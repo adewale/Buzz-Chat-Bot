@@ -154,17 +154,21 @@ class PostsHandler(webapp.RequestHandler):
     logging.info("New content: %s" % self.request.body)
     id = self.request.get('id')
 
-    # TODO(ade) Must also correctly handle unsubscription
     # If this is a hub challenge
     if self.request.get('hub.challenge'):
     # If this subscription exists
-      if self.request.get('hub.mode') == "subscribe" and xmpp.Subscription.get_by_id(int(id)):
+      mode = self.request.get('hub.mode')
+      topic = self.request.get('hub.topic')
+      if mode == "subscribe" and xmpp.Subscription.get_by_id(int(id)):
         self.response.out.write(self.request.get('hub.challenge'))
-        logging.info("Successfully accepted challenge for feed: %s" % self.request.get('hub.topic'))
+        logging.info("Successfully accepted %s challenge for feed: %s" % (mode, topic))
+      elif mode == "unsubscribe" and not xmpp.Subscription.get_by_id(int(id)):
+        self.response.out.write(self.request.get('hub.challenge'))
+        logging.info("Successfully accepted %s challenge for feed: %s" % (mode, topic))
       else:
         self.response.set_status(404)
         self.response.out.write("Challenge failed")
-        logging.info("Challenge failed for feed: %s" % self.request.get('hub.topic'))
+        logging.info("Challenge failed for feed: %s" % topic)
       # Once a challenge has been issued there's no point in returning anything other than challenge passed or failed
       return
 
