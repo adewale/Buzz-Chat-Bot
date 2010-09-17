@@ -182,8 +182,10 @@ class XmppHandler(xmpp_handlers.CommandHandler):
     message_builder = MessageBuilder()
     sender = extract_sender_email_address(message.sender)
     logging.info('Sender: %s' % sender)
-    for subscription in Subscription.gql('WHERE subscriber = :1', sender):
-      message_builder.add('Search term: %s with id: %s' % (subscription.search_term, subscription.id()))
+    subscriptions_query = Subscription.gql('WHERE subscriber = :1', sender)
+    if subscriptions_query.count() > 0:
+      for subscription in subscriptions_query:
+        message_builder.add('Search term: %s with id: %s' % (subscription.search_term, subscription.id()))
     else:
       message_builder.add('No subscriptions')
     reply(message_builder, message)

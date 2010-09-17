@@ -134,6 +134,15 @@ class XmppHandlerTest(BuzzChatBotFunctionalTestCase):
       expected_item = 'Search term: %s with id: %s' % (subscription.search_term, subscription.id())
       self.assertTrue(expected_item in message.message_to_send, message.message_to_send)
 
+  def test_list_command_can_show_exactly_one_subscription(self):
+    handler = XmppHandler()
+    sender = '1@example.com'
+    subscription = self._setup_subscription(sender=sender, search_term='searchA')
+    message = StubMessage(sender=sender, body='/list')
+    handler.list_command(message=message)
+    expected_item = 'Search term: %s with id: %s' % (subscription.search_term, subscription.id())
+    self.assertEquals(expected_item, message.message_to_send)
+
   def test_list_command_can_handle_empty_set_of_search_terms(self):
     handler = XmppHandler()
     sender = '1@example.com'
