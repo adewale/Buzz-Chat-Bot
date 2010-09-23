@@ -12,13 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from django.utils import html
 from google.appengine.api import xmpp
 from google.appengine.ext import db
 from google.appengine.ext.webapp import xmpp_handlers
 
+import buzz_gae_client
 import logging
 import urllib
+import oauth_handlers
 import pshb
 import settings
 
@@ -40,7 +41,7 @@ class Subscription(db.Model):
     """Return True or False to indicate if a subscription with the given id exists"""
     if not id:
       return False
-    return Subscription.get_by_id(int(id)) != None
+    return Subscription.get_by_id(int(id)) is not None
 
 
 class Tracker(object):
@@ -132,6 +133,32 @@ class MessageBuilder(object):
   def build_message_from_post(self, post, search_term):
     return '''[%s] matched post: [%s] with URL: [%s]''' % (search_term, post.title, post.url)
 
+class SimpleBuzzClient(object):
+  "Simple client that exposes the bare minimum set of Buzz operations"
+
+  def __init__(self):
+    self.builder = buzz_gae_client.BuzzGaeClient(settings.CONSUMER_KEY, settings.CONSUMER_SECRET)
+
+  def post(self, sender, message_body):
+    user_token = oauth_handlers.UserToken.find_by_email_address(sender)
+    api_client = self.builder.build_api_client(user_token.get_access_token())
+
+    #TODO(ade) What happens with users who have hidden their email address?
+    user_id = sender.split('@')[0]
+
+    activities = api_client.activities()
+    activity = activities.insert(userId=user_id, body={
+      'title': message_body,
+      'object': {
+        'content': u'',
+        'type': 'note'}
+      }
+                                 ).execute()
+    url = activity['links']['alternate'][0]['href']
+    logging.info('Just created: %s' % url)
+    return url
+
+
 commands = [
     '/help Prints out this message',
     '/track [search term] Starts tracking the given search term and returns the id for your subscription',
@@ -141,6 +168,8 @@ commands = [
 ]
 
 class XmppHandler(xmpp_handlers.CommandHandler):
+  def __init__(self, buzz_client=SimpleBuzzClient()):
+    self.buzz_client = buzz_client
 
   def help_command(self, message=None):
     logging.info('Received message from: %s' % message.sender)
@@ -193,7 +222,24 @@ class XmppHandler(xmpp_handlers.CommandHandler):
   def about_command(self, message):
     logging.info('Received message from: %s' % message.sender)
     message_builder = MessageBuilder()
-    message_builder.add('Welcome to %s@appspot.com. A bot for Google Buzz. Find out more at: http://%s.appspot.com' % (settings.APP_NAME, settings.APP_NAME))
+    about_message = 'Welcome to %s@appspot.com. A bot for Google Buzz. Find out more at: http://%s.appspot.com' % (settings.APP_NAME, settings.APP_NAME)
+    message_builder.add(about_message)
+    reply(message_builder, message)
+
+  def post_command(self, message):
+    logging.info('Received message from: %s' % message.sender)
+    message_builder = MessageBuilder()
+    sender = extract_sender_email_address(message.sender)
+    user_token = oauth_handlers.UserToken.find_by_email_address(sender)
+    if not user_token:
+      message_builder.add('You (%s) have not given access to your Google Buzz account. Please do so at: http://%s.appspot.com' % (sender, settings.APP_NAME))
+    elif not user_token.access_token_string:
+      # User didn't finish the OAuth dance so we make them start again
+      user_token.delete()
+      message_builder.add('You (%s) did not complete the process for giving access to your Google Buzz account. Please do so at: http://%s.appspot.com' % (sender, settings.APP_NAME))
+    else:
+      url = self.buzz_client.post(sender, message.body)
+      message_builder.add('Posted: %s' % url)
     reply(message_builder, message)
 
 
