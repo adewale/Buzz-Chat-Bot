@@ -1,0 +1,14 @@
+Buzz Chat Bot
+============
+Verify that phrase search works and add tests for it 
+/search [some search]
+Register the app so that people don't have to trust anonymous
+Fix the Welcome page so that people can see it without needing to be logged in
+Update the web page so that it's more informative and doesn't require you login before it tells you anything 
+Update the PRD - describing this
+Work out how to handle location-based Track and complex searches. Perhaps using the web interface?
+Use Bob Wyman's trick where /track initially does a /search and gives you the first 10 results to verify that it's worked
+File a bug for language indexing in search
+File a bug for search by actor.id
+When someone adds the bot to their roster, send them a link to the app's website so that they can do the oauth dance
+When someone visits the website and does the OAuth dance, send them a chat invite
