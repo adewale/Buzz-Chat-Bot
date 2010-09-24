@@ -139,7 +139,8 @@ commands = [
     '/track [search term] Starts tracking the given search term and returns the id for your subscription',
     '/untrack [id] Removes your subscription for that id',
     '/list Lists all search terms and ids currently being tracked by you',
-    '/about Tells you which instance of the Buzz Chat Bot you are using'
+    '/about Tells you which instance of the Buzz Chat Bot you are using',
+    '/post [some message] Posts that message to Buzz'
 ]
 
 class XmppHandler(xmpp_handlers.CommandHandler):
