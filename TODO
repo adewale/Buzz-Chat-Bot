@@ -1,5 +1,9 @@
 Buzz Chat Bot
 ============
+Add a sensible explanation of what this bot does and why anyone would want to use it: 
+- mention the low-latency of using chat clients, which are always on, versus the web
+- mention that GChat saves messages that you received whilst you were offline
+- mention statuscasting: http://www.designingsocialinterfaces.com/patterns/Statuscasting
 Verify that phrase search works and add tests for it 
 /search [some search]
 Register the app so that people don't have to trust anonymous
