@@ -17,20 +17,20 @@ from google.appengine.ext.webapp import template
 from google.appengine.ext.webapp.util import login_required
 from google.appengine.ext.webapp.util import run_wsgi_app
 
-import buzz_gae_client
 import logging
 import oauth_handlers
 import os
 import settings
 import xmpp
 import pshb
+import simple_buzz_wrapper
 
 class ProfileViewingHandler(webapp.RequestHandler):
   @login_required
   def get(self):
     user_token = oauth_handlers.UserToken.get_current_user_token()
-    simple_buzz_client = xmpp.SimpleBuzzClient(user_token)
-    user_profile_data = simple_buzz_client.get_profile()
+    buzz_wrapper = simple_buzz_wrapper.SimpleBuzzWrapper(user_token)
+    user_profile_data = buzz_wrapper.get_profile()
 
     template_values = {'user_profile_data': user_profile_data, 'access_token': user_token.access_token_string}
     path = os.path.join(os.path.dirname(__file__), 'profile.html')

@@ -17,10 +17,11 @@ import unittest
 
 from gaetestbed import FunctionalTestCase
 from tracker_tests import StubHubSubscriber
-from xmpp import Tracker, XmppHandler, SimpleBuzzClient
+from xmpp import Tracker, XmppHandler
 
 import oauth_handlers
 import settings
+import simple_buzz_wrapper
 
 class StubMessage(object):
   def __init__(self, sender='foo@example.com', body=''):
@@ -30,10 +31,11 @@ class StubMessage(object):
   def reply(self, message_to_send, raw_xml=False):
     self.message_to_send = message_to_send
 
-class StubSimpleBuzzClient(SimpleBuzzClient):
+class StubSimpleBuzzWrapper(simple_buzz_wrapper.SimpleBuzzWrapper):
   def __init__(self):
     self.url = 'some fake url'
   def post(self, sender, message_body):
+    self.message = message_body
     return self.url
 
 
@@ -77,7 +79,7 @@ class XmppHandlerTest(BuzzChatBotFunctionalTestCase):
     self.assertTrue('Untrack failed' in message.message_to_send, message.message_to_send)
 
   def test_untrack_command_fails_for_missing_subscription_argument(self):
-    subscription = self._setup_subscription()
+    self._setup_subscription()
     message = StubMessage()
     handler = XmppHandler()
     handler.untrack_command(message=message)
@@ -179,8 +181,8 @@ class XmppHandlerTest(BuzzChatBotFunctionalTestCase):
     self.assertTrue(expected_item in message.message_to_send, message.message_to_send)
 
   def test_post_command_warns_users_with_no_access_token(self):
-    stub = StubSimpleBuzzClient()
-    handler = XmppHandler(buzz_client=stub)
+    stub = StubSimpleBuzzWrapper()
+    handler = XmppHandler(buzz_wrapper=stub)
     sender = '1@example.com'
 
     user_token = oauth_handlers.UserToken(email_address=sender)
@@ -193,8 +195,8 @@ class XmppHandlerTest(BuzzChatBotFunctionalTestCase):
     self.assertEquals(None, oauth_handlers.UserToken.find_by_email_address(sender))
 
   def test_post_command_posts_message_for_user_with_oauth_token(self):
-    stub = StubSimpleBuzzClient()
-    handler = XmppHandler(buzz_client=stub)
+    stub = StubSimpleBuzzWrapper()
+    handler = XmppHandler(buzz_wrapper=stub)
     sender = '1@example.com'
 
     user_token = oauth_handlers.UserToken(email_address=sender)
@@ -205,3 +207,17 @@ class XmppHandlerTest(BuzzChatBotFunctionalTestCase):
     handler.post_command(message=message)
     expected_item = 'Posted: %s' % stub.url
     self.assertEquals(expected_item, message.message_to_send)
+
+  def test_post_command_strips_command_from_posted_message(self):
+    stub = StubSimpleBuzzWrapper()
+    handler = XmppHandler(buzz_wrapper=stub)
+    sender = '1@example.com'
+
+    user_token = oauth_handlers.UserToken(email_address=sender)
+    user_token.access_token_string = 'some thing that looks like an access token from a distance'
+    user_token.put()
+    message = StubMessage(sender=sender, body='/post some message')
+
+    handler.post_command(message=message)
+    expected_item = ' some message'
+    self.assertEquals(expected_item, stub.message)
