@@ -136,7 +136,9 @@ class MessageBuilder(object):
 class SimpleBuzzClient(object):
   "Simple client that exposes the bare minimum set of Buzz operations"
 
-  def __init__(self):
+  def __init__(self, user_token=None):
+    if user_token:
+      self.current_user_token = user_token
     self.builder = buzz_gae_client.BuzzGaeClient(settings.CONSUMER_KEY, settings.CONSUMER_SECRET)
 
   def post(self, sender, message_body):
@@ -147,16 +149,23 @@ class SimpleBuzzClient(object):
     user_id = sender.split('@')[0]
 
     activities = api_client.activities()
+    logging.info('Retrieved activities for: %s' % user_id)
     activity = activities.insert(userId=user_id, body={
       'title': message_body,
       'object': {
-        'content': u'',
+        'content': message_body,
         'type': 'note'}
       }
                                  ).execute()
     url = activity['links']['alternate'][0]['href']
     logging.info('Just created: %s' % url)
     return url
+
+  def get_profile(self):
+    api_client = self.builder.build_api_client(self.current_user_token.get_access_token())
+    user_profile_data = api_client.people().get(userId='@me').execute()
+    return user_profile_data
+
 
 
 commands = [

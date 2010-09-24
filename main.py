@@ -29,9 +29,8 @@ class ProfileViewingHandler(webapp.RequestHandler):
   @login_required
   def get(self):
     user_token = oauth_handlers.UserToken.get_current_user_token()
-    client = buzz_gae_client.BuzzGaeClient(settings.CONSUMER_KEY, settings.CONSUMER_SECRET)
-    api_client = client.build_api_client(user_token.get_access_token())
-    user_profile_data = api_client.people().get(userId='@me')
+    simple_buzz_client = xmpp.SimpleBuzzClient(user_token)
+    user_profile_data = simple_buzz_client.get_profile()
 
     template_values = {'user_profile_data': user_profile_data, 'access_token': user_token.access_token_string}
     path = os.path.join(os.path.dirname(__file__), 'profile.html')
