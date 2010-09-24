@@ -12,6 +12,18 @@ At the moment it lets you ask for:
 /post [some message] Posts that message to Buzz
 
 
+Why does it exist?
+==================
+There are 2 sets of reasons why this bot exists.
+
+1- I wanted to create a demo app (using the new Python client library: http://code.google.com/p/google-api-python-client/ ) which would show people a different kind of Buzz app. It's not trying to be a slightly different clone of the existing UI.
+2- My experience with Jaiku and Friendfeed taught me that chat interfaces have a number of advantage over web interfaces: 
+- they're quicker since you can't beat the latency of alt-tabbing to Adium
+- they're always on
+- they're transient so you don't feel inundated if you track lots of keywords or see lots of posts because they all just flow by
+- they encourage statuscasting: http://www.designingsocialinterfaces.com/patterns/Statuscasting which makes for a more conversational experience
+- they allow people and brands to conveniently track keywords without having to learn how PSHB works
+
 What does it require?
 =====================
 App Engine
@@ -33,6 +45,7 @@ nosetests --with-gae *test*py
 
 
 INSTALLATION
+============
 This isn't yet ready for installation by people who don't feel like changing the Python code. However if you feel brave you should:
 - Register an AppEngine application at http://appengine.google.com/start/createapp?
 - Change the app.yaml file to have the same Application Identifier as your application.
