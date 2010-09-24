@@ -4,9 +4,13 @@ If it breaks you get to keep both pieces.
 What does it do?
 ================
 At the moment it lets you ask for:
-/help : get help
-/track [some search term] : which will send you notifications of matching Buzz posts. 
-*WARNING: untrack is not currently implemented*
+/help Prints out this message
+/track [search term] Starts tracking the given search term and returns the id for your subscription
+/untrack [id] Removes your subscription for that id
+/list Lists all search terms and ids currently being tracked by you
+/about Tells you which instance of the Buzz Chat Bot you are using
+/post [some message] Posts that message to Buzz
+
 
 What does it require?
 =====================
@@ -32,7 +36,7 @@ INSTALLATION
 This isn't yet ready for installation by people who don't feel like changing the Python code. However if you feel brave you should:
 - Register an AppEngine application at http://appengine.google.com/start/createapp?
 - Change the app.yaml file to have the same Application Identifier as your application.
-- Change the APP_NAME constant to have the same Application Identifier as your application.
-- Change the SECRET_TOKEN from the default
-- Take a look at settings.py to see if there's anything else there you want to change
+- Take a look at settings.py
+-- Change the settings.APP_NAME constant to have the same Application Identifier as your application.
+-- Change the settings.SECRET_TOKEN from the default
 - Use the Google App Engine Launcher: http://code.google.com/appengine/downloads.html#Google_App_Engine_SDK_for_Python to deploy the application.
