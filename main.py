@@ -49,7 +49,7 @@ class PostsHandler(webapp.RequestHandler):
     """Show all the resources in this collection"""
     logging.info("Headers were: %s" % str(self.request.headers))
     logging.info('Request: %s' % str(self.request))
-    logging.info("New content: %s" % self.request.body)
+    logging.debug("New content: %s" % self.request.body)
     id = self.request.get('id')
 
     # If this is a hub challenge
@@ -74,7 +74,7 @@ class PostsHandler(webapp.RequestHandler):
     """Create a new resource in this collection"""
     logging.info("Headers were: %s" % str(self.request.headers))
     logging.info('Request: %s' % str(self.request))
-    logging.info("New content: %s" % self.request.body)
+    logging.debug("New content: %s" % self.request.body)
     id = self.request.get('id')
 
     subscription = xmpp.Subscription.get_by_id(int(id))

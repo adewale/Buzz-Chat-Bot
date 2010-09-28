@@ -39,7 +39,10 @@ SHOULD_VERIFY_INCOMING_POSTS = False
 
 
 # Buzz Chat Bot settings
-# OAuth consumer key and secret - you should probably leave these alone
+# OAuth consumer key and secret - you should change these to 'anonymous' unless you really are buzzchatbot.appspot.com
+# Alternatively you could go here: https://www.google.com/accounts/ManageDomains and register your instance so that you'll get your own consumer key and consumer secret
+#CONSUMER_KEY = 'buzzchatbot.appspot.com'
+#CONSUMER_SECRET = 'tcw1rCMgLVY556Y0Q4rW/RnK'
 CONSUMER_KEY = 'anonymous'
 CONSUMER_SECRET = 'anonymous'
 
