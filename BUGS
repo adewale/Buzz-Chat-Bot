@@ -1,0 +1,4 @@
+According to Brian Rose: posts that contain @mentions cause an error.
+According to Robert C Sanchez the bot doesn't work with Empathy on Ubuntu. I suspect this is to do with either the formatting of the messages or the structure of the JID. Although Michael Bernstein has a theory that the /commands are being intercepted by the chat client. However commands like /post and /track aren't working for him so there may be something else wrong.
+
+
