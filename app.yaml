@@ -1,12 +1,9 @@
-application: buzzchatbot
+application: kiwibuzzer
 version: 1
 runtime: python
 api_version: 1
 
 handlers:
-- url: /google53de00654ebd3aa1.html
-  static_files: staticverification/google53de00654ebd3aa1.html
-  upload: staticverification/google53de00654ebd3aa1.html
 - url: /css
   static_dir: css
 - url: /images

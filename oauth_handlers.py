@@ -81,7 +81,7 @@ class WelcomeHandler(webapp.RequestHandler):
   @login_required
   def get(self):
     logging.info("Request body %s" % self.request.body)
-    template_values = {}
+    template_values = {"jabber_id": ("%s@appspot.com" % settings.APP_NAME)}
     if UserToken.access_token_exists():
       template_values['access_token_exists'] = 'true'
     else:
