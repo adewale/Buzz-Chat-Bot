@@ -134,16 +134,25 @@ class MessageBuilder(object):
     return '''[%s] matched post: [%s] with URL: [%s]''' % (search_term, post.title, post.url)
 
 
-commands = [
-    '/help Prints out this message',
-    '/track [search term] Starts tracking the given search term and returns the id for your subscription',
-    '/untrack [id] Removes your subscription for that id',
-    '/list Lists all search terms and ids currently being tracked by you',
-    '/about Tells you which instance of the Buzz Chat Bot you are using',
-    '/post [some message] Posts that message to Buzz'
-]
 
 class XmppHandler(xmpp_handlers.CommandHandler):
+  HELP_CMD    = '/help'
+  TRACK_CMD   = '/track'
+  UNTRACK_CMD = '/untrack'
+  LIST_CMD    = '/list'
+  ABOUT_CMD   = '/about'
+  POST_CMD    = '/post'
+
+  commands = [
+        '%s Prints out this message' % HELP_CMD,
+        '%s [search term] Starts tracking the given search term and returns the id for your subscription' % TRACK_CMD,
+        '%s [id] Removes your subscription for that id' % UNTRACK_CMD,
+        '%s Lists all search terms and ids currently being tracked by you' % LIST_CMD,
+        '%s Tells you which instance of the Buzz Chat Bot you are using' % ABOUT_CMD,
+        '%s [some message] Posts that message to Buzz' % POST_CMD
+  ]
+
+  
   def __init__(self, buzz_wrapper=simple_buzz_wrapper.SimpleBuzzWrapper()):
     self.buzz_wrapper = buzz_wrapper
 

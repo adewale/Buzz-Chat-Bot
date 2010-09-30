@@ -42,7 +42,7 @@ class StubSimpleBuzzWrapper(simple_buzz_wrapper.SimpleBuzzWrapper):
 class BuzzChatBotFunctionalTestCase(FunctionalTestCase, unittest.TestCase):
   def _setup_subscription(self, sender='foo@example.com',search_term='somestring'):
     search_term = search_term
-    body = '/track %s' % search_term
+    body = '%s %s' % (XmppHandler.TRACK_CMD,search_term)
 
     hub_subscriber = StubHubSubscriber()
     tracker = Tracker(hub_subscriber=hub_subscriber)
@@ -72,7 +72,7 @@ class PostsHandlerTest(BuzzChatBotFunctionalTestCase):
 
 class XmppHandlerTest(BuzzChatBotFunctionalTestCase):
   def test_untrack_command_fails_for_missing_subscription_value(self):
-    message = StubMessage(body='/untrack 777')
+    message = StubMessage(body='%s 777' % XmppHandler.UNTRACK_CMD)
     handler = XmppHandler()
     handler.untrack_command(message=message)
 
@@ -89,7 +89,7 @@ class XmppHandlerTest(BuzzChatBotFunctionalTestCase):
   def test_untrack_command_fails_for_wrong_subscription_id(self):
     subscription = self._setup_subscription()
     id = subscription.id() + 1
-    message = StubMessage(body='/untrack %s' % id)
+    message = StubMessage(body='%s %s' % (XmppHandler.UNTRACK_CMD,id))
     handler = XmppHandler()
     handler.untrack_command(message=message)
 
@@ -98,7 +98,7 @@ class XmppHandlerTest(BuzzChatBotFunctionalTestCase):
   def test_untrack_command_succeeds_for_valid_subscription_id(self):
     subscription = self._setup_subscription()
     id = subscription.id()
-    message = StubMessage(body='/untrack %s' % id)
+    message = StubMessage(body='%s %s' % (XmppHandler.UNTRACK_CMD, id))
     handler = XmppHandler()
     handler.untrack_command(message=message)
 
@@ -107,21 +107,21 @@ class XmppHandlerTest(BuzzChatBotFunctionalTestCase):
   def test_untrack_command_fails_for_other_peoples_valid_subscription_id(self):
     subscription = self._setup_subscription()
     id = subscription.id()
-    message = StubMessage(sender='notfoo@example.com', body='/untrack %s' % id)
+    message = StubMessage(sender='notfoo@example.com', body='%s %s' % (XmppHandler.UNTRACK_CMD,id))
     handler = XmppHandler()
     handler.untrack_command(message=message)
 
     self.assertTrue('Untrack failed' in message.message_to_send, message.message_to_send)
 
   def test_untrack_command_fails_for_malformed_subscription_id(self):
-    message = StubMessage(body='/untrack jaiku')
+    message = StubMessage(body='%s jaiku' % XmppHandler.UNTRACK_CMD)
     handler = XmppHandler()
     handler.untrack_command(message=message)
 
     self.assertTrue('Untrack failed' in message.message_to_send, message.message_to_send)
 
   def test_untrack_command_fails_for_empty_subscription_id(self):
-    message = StubMessage(body='/untrack')
+    message = StubMessage(body='%s' % XmppHandler.UNTRACK_CMD)
     handler = XmppHandler()
     handler.untrack_command(message=message)
 
@@ -136,7 +136,7 @@ class XmppHandlerTest(BuzzChatBotFunctionalTestCase):
     handler = XmppHandler()
     for people in [(sender1, subscription1), (sender2, subscription2)]:
       sender = people[0]
-      message = StubMessage(sender=sender, body='/list')
+      message = StubMessage(sender=sender, body='%s' % XmppHandler.LIST_CMD)
       handler.list_command(message=message)
       subscription = people[1]
       self.assertTrue(str(subscription.id()) in message.message_to_send)
@@ -148,7 +148,7 @@ class XmppHandlerTest(BuzzChatBotFunctionalTestCase):
     handler = XmppHandler()
     sender = '1@example.com'
     subscription = self._setup_subscription(sender=sender, search_term='searchA')
-    message = StubMessage(sender=sender, body='/list')
+    message = StubMessage(sender=sender, body='%s' % XmppHandler.LIST_CMD)
     handler.list_command(message=message)
     expected_item = 'Search term: %s with id: %s' % (subscription.search_term, subscription.id())
     self.assertEquals(expected_item, message.message_to_send)
@@ -156,7 +156,7 @@ class XmppHandlerTest(BuzzChatBotFunctionalTestCase):
   def test_list_command_can_handle_empty_set_of_search_terms(self):
     handler = XmppHandler()
     sender = '1@example.com'
-    message = StubMessage(sender=sender, body='/list')
+    message = StubMessage(sender=sender, body='%s' % XmppHandler.LIST_CMD)
     handler.list_command(message=message)
     expected_item = 'No subscriptions'
     self.assertTrue(len(message.message_to_send) > 0)
@@ -165,7 +165,7 @@ class XmppHandlerTest(BuzzChatBotFunctionalTestCase):
   def test_about_command_says_what_bot_is_running(self):
     handler = XmppHandler()
     sender = '1@example.com'
-    message = StubMessage(sender=sender, body='/about')
+    message = StubMessage(sender=sender, body='%s'  % XmppHandler.ABOUT_CMD)
     handler.about_command(message=message)
     expected_item = 'Welcome to %s@appspot.com. A bot for Google Buzz' % settings.APP_NAME
     self.assertTrue(expected_item in message.message_to_send, message.message_to_send)
@@ -173,7 +173,7 @@ class XmppHandlerTest(BuzzChatBotFunctionalTestCase):
   def test_post_command_warns_users_with_no_oauth_token(self):
     handler = XmppHandler()
     sender = '1@example.com'
-    message = StubMessage(sender=sender, body='/post some message')
+    message = StubMessage(sender=sender, body='%s some message' % XmppHandler.POST_CMD)
 
     handler.post_command(message=message)
 
@@ -187,7 +187,7 @@ class XmppHandlerTest(BuzzChatBotFunctionalTestCase):
 
     user_token = oauth_handlers.UserToken(email_address=sender)
     user_token.put()
-    message = StubMessage(sender=sender, body='/post some message')
+    message = StubMessage(sender=sender, body='%s some message'  % XmppHandler.POST_CMD)
 
     handler.post_command(message=message)
     expected_item = 'You (%s) did not complete the process for giving access to your Google Buzz account. Please do so at: http://%s.appspot.com' % (sender, settings.APP_NAME)
@@ -202,7 +202,7 @@ class XmppHandlerTest(BuzzChatBotFunctionalTestCase):
     user_token = oauth_handlers.UserToken(email_address=sender)
     user_token.access_token_string = 'some thing that looks like an access token from a distance'
     user_token.put()
-    message = StubMessage(sender=sender, body='/post some message')
+    message = StubMessage(sender=sender, body='%s some message' % XmppHandler.POST_CMD)
 
     handler.post_command(message=message)
     expected_item = 'Posted: %s' % stub.url
@@ -216,7 +216,7 @@ class XmppHandlerTest(BuzzChatBotFunctionalTestCase):
     user_token = oauth_handlers.UserToken(email_address=sender)
     user_token.access_token_string = 'some thing that looks like an access token from a distance'
     user_token.put()
-    message = StubMessage(sender=sender, body='/post some message')
+    message = StubMessage(sender=sender, body='%s some message' % XmppHandler.POST_CMD)
 
     handler.post_command(message=message)
     expected_item = ' some message'
