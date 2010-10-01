@@ -13,7 +13,7 @@
 # limitations under the License.
 
 import unittest
-from xmpp import Subscription, Tracker
+from xmpp import Subscription, Tracker, XmppHandler
 import pshb
 import settings
 
@@ -27,20 +27,20 @@ class StubHubSubscriber(pshb.HubSubscriber):
 class TrackerTest(unittest.TestCase):
   def test_tracker_rejects_empty_search_term(self):
     sender = 'foo@example.com'
-    body = '/track'
+    body = XmppHandler.TRACK_CMD
     tracker = Tracker()
     self.assertEquals(None, tracker.track(sender, body))
 
   def test_tracker_rejects_padded_empty_string(self):
     sender = 'foo@example.com'
-    body = '/track     '
+    body = '%s     ' % XmppHandler.TRACK_CMD
     tracker = Tracker()
     self.assertEquals(None, tracker.track(sender, body))
 
   def test_tracker_accepts_valid_string(self):
     sender = 'foo@example.com'
     search_term='somestring'
-    body = '/track %s' % search_term
+    body = '%s %s' % (XmppHandler.TRACK_CMD, search_term)
     hub_subscriber = StubHubSubscriber()
     tracker = Tracker(hub_subscriber=hub_subscriber)
     expected_callback_url = 'http://%s.appspot.com/posts/%s/%s' % (settings.APP_NAME, sender, search_term)
@@ -51,7 +51,7 @@ class TrackerTest(unittest.TestCase):
 
   def test_tracker_extracts_correct_search_term(self):
     search_term = 'somestring'
-    body = '/track %s' % search_term
+    body = '%s %s' % (XmppHandler.TRACK_CMD, search_term)
     tracker = Tracker()
     self.assertEquals(search_term, tracker._extract_search_term(body))
 
@@ -75,7 +75,7 @@ class TrackerTest(unittest.TestCase):
     self.assertEquals(0, len(Subscription.all().fetch(100)))
     sender = 'foo@example.com'
     search_term='somestring'
-    body = '/track %s' % search_term
+    body = '%s %s' % (XmppHandler.TRACK_CMD,search_term)
 
     tracker = Tracker()
     subscription = tracker.track(sender, body)
@@ -85,7 +85,7 @@ class TrackerTest(unittest.TestCase):
   def test_tracker_subscribes_with_callback_url_that_identifies_subscriber_and_query(self):
     sender = 'foo@example.com'
     search_term='somestring'
-    body = '/track %s' % search_term
+    body = '%s %s' % (XmppHandler.TRACK_CMD,search_term)
 
     hub_subscriber = StubHubSubscriber()
     tracker = Tracker(hub_subscriber=hub_subscriber)
@@ -97,7 +97,7 @@ class TrackerTest(unittest.TestCase):
   def test_tracker_subscribes_with_urlencoded_callback_url(self):
     sender = 'foo@example.com'
     search_term='some string'
-    body = '/track %s' % search_term
+    body = '%s %s' % (XmppHandler.TRACK_CMD,search_term)
 
     hub_subscriber = StubHubSubscriber()
     tracker = Tracker(hub_subscriber=hub_subscriber)
@@ -109,7 +109,7 @@ class TrackerTest(unittest.TestCase):
   def test_tracker_subscribes_with_callback_url_that_identifies_subscriber_and_query_without_xmpp_client_identifier(self):
     sender = 'foo@example.com/Adium380DADCD'
     search_term='somestring'
-    body = '/track %s' % search_term
+    body = '%s %s' % (XmppHandler.TRACK_CMD,search_term)
 
     hub_subscriber = StubHubSubscriber()
     tracker = Tracker(hub_subscriber=hub_subscriber)
@@ -121,7 +121,7 @@ class TrackerTest(unittest.TestCase):
   def test_tracker_rejects_invalid_id_for_untracking(self):
     self._delete_all_subscriptions()
     sender = 'foo@example.com/Adium380DADCD'
-    body = '/untrack 1'
+    body = '%s 1' % XmppHandler.UNTRACK_CMD
 
     hub_subscriber = StubHubSubscriber()
     tracker = Tracker(hub_subscriber=hub_subscriber)
@@ -133,13 +133,13 @@ class TrackerTest(unittest.TestCase):
 
     sender = 'foo@example.com/Adium380DADCD'
     search_term='somestring'
-    body = '/track %s' % search_term
+    body = '%s %s' % (XmppHandler.TRACK_CMD,search_term)
 
     hub_subscriber = StubHubSubscriber()
     tracker = Tracker(hub_subscriber=hub_subscriber)
     track_subscription = tracker.track(sender, body)
 
-    body = '/untrack %s' % track_subscription.id()
+    body = '%s %s' % (XmppHandler.UNTRACK_CMD,track_subscription.id())
     untrack_subscription = tracker.untrack(sender, body)
     self.assertEquals(track_subscription, untrack_subscription)
     self.assertFalse(Subscription.exists(track_subscription.id()))

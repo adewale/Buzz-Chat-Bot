@@ -22,6 +22,7 @@ import oauth_handlers
 import pshb
 import settings
 import simple_buzz_wrapper
+import re
 
 class Subscription(db.Model):
   url = db.StringProperty(required=True)
@@ -95,7 +96,7 @@ class Tracker(object):
 
   def untrack(self, message_sender, message_body):
     logging.info('Message is: %s' % message_body)
-    id = message_body[len('/untrack'):]
+    id = message_body[len(XmppHandler.UNTRACK_CMD):]
     if not self._is_number(id):
       return None
 
@@ -133,28 +134,97 @@ class MessageBuilder(object):
   def build_message_from_post(self, post, search_term):
     return '''[%s] matched post: [%s] with URL: [%s]''' % (search_term, post.title, post.url)
 
+class SlashlessCommandMessage(xmpp.Message):
+  """ The default message format with GAE xmpp identifies the command as the first non whitespace word. 
+  The argument is whatever occurs after that. 
+  Design notes: it uses re for tokenization which is a step up
+  from how Message works (that expects a single space character) 
+  """
+  
+  def __ensure_command_and_args_extracted(self):
+    """ Take the message and identify the command and argument if there is one.
+    In the case of a SlashlessCommandMessage, there is always one -- the first word is the command.      
+    """
+    
+    # cache the values. 
+    if self.__arg != None:
+      return
+    # match any white space and then a word (cmd) 
+    #  then any white space then everything after that (arg). 
+    results = re.search(r"\s(\S*\b)\s*(.*)", self.__body) 
+    self.__command = results.group(1)
+    self.__arg = results.group(2)
+    
+  @property 
+  def command(self):
+    self.__ensure_command_and_args_extracted() 
+    #return super(xmpp.Message, self)
+    return self.__command
+  
+  @property 
+  def arg(self):
+    self.__ensure_command_and_args_extracted() 
+    #return super(xmpp.Message, self)
+    return self.__arg
+
+ 
+class SlashlessCommandHandlerMixin(xmpp_handlers.CommandHandlerMixin):
+  """A command handler for XMPP bots that does not require a slash char '/' at beginning
+  This makes the most sense when you're implementing a pure bot -- there's no context switch.  
+  TODO to do this right would mean overriding xmpp.Message.command as this code is now 
+  used but overridden. 
+  """
+
+  def message_received(self, message):
+    """Called when a message is sent to the XMPP bot.
+    Args:
+      message: Message: The message that was sent by the user.
+    """
+    if message.command:
+      handler_name = '%s_command' % (message.command,)
+      handler = getattr(self, handler_name, None)
+      if handler:
+        handler(message)
+      else:
+        self.unhandled_command(message)
 
 
-class XmppHandler(xmpp_handlers.CommandHandler):
-  HELP_CMD    = '/help'
-  TRACK_CMD   = '/track'
-  UNTRACK_CMD = '/untrack'
-  LIST_CMD    = '/list'
-  ABOUT_CMD   = '/about'
-  POST_CMD    = '/post'
+class XmppHandler(SlashlessCommandHandlerMixin, xmpp_handlers.BaseHandler):
+  HELP_CMD    = 'help'
+  TRACK_CMD   = 'track'
+  UNTRACK_CMD = 'untrack'
+  LIST_CMD    = 'list'
+  ABOUT_CMD   = 'about'
+  POST_CMD    = 'post'
 
   commands = [
-        '%s Prints out this message' % HELP_CMD,
-        '%s [search term] Starts tracking the given search term and returns the id for your subscription' % TRACK_CMD,
-        '%s [id] Removes your subscription for that id' % UNTRACK_CMD,
-        '%s Lists all search terms and ids currently being tracked by you' % LIST_CMD,
-        '%s Tells you which instance of the Buzz Chat Bot you are using' % ABOUT_CMD,
-        '%s [some message] Posts that message to Buzz' % POST_CMD
+    '%s Prints out this message' % HELP_CMD,
+    '%s [search term] Starts tracking the given search term and returns the id for your subscription' % TRACK_CMD,
+    '%s [id] Removes your subscription for that id' % UNTRACK_CMD,
+    '%s Lists all search terms and ids currently being tracked by you' % LIST_CMD,
+    '%s Tells you which instance of the Buzz Chat Bot you are using' % ABOUT_CMD,
+    '%s [some message] Posts that message to Buzz' % POST_CMD
   ]
 
   
   def __init__(self, buzz_wrapper=simple_buzz_wrapper.SimpleBuzzWrapper()):
+    print "XmppHandler.__init__"
     self.buzz_wrapper = buzz_wrapper
+    
+  def post(self):
+    print "XmppHandler.post"
+    """ Redefines post to create a message from our new SlashlessCommandMessage. 
+    TODO xmpp_handlers: redefine the BaseHandler to have a function createMessage which can be 
+    overridden this will avoid the code duplicated below
+    """
+    try:
+      # CHANGE this is the only bit that has changed from xmpp_handlers.Message 
+      self.xmpp_message = SlashlessCommandMessage(self.request.POST)
+      # END CHANGE
+    except xmpp.InvalidMessageError, e:
+      logging.error("Invalid XMPP request: Missing required field %s", e[0])
+      return
+    self.message_received(self.xmpp_message)
 
   def help_command(self, message=None):
     logging.info('Received message from: %s' % message.sender)
@@ -188,7 +258,7 @@ class XmppHandler(xmpp_handlers.CommandHandler):
     if subscription:
       message_builder.add('No longer tracking: %s with id: %s' % (subscription.search_term, subscription.id()))
     else:
-      message_builder.add('Untrack failed. That subscription does not exist for you. Remember the syntax is: /untrack [id]')
+      message_builder.add('Untrack failed. That subscription does not exist for you. Remember the syntax is: %s [id]' % XmppHandler.UNTRACK_CMD)
     reply(message_builder, message)
 
   def list_command(self, message=None):
