@@ -166,7 +166,7 @@ class XmppHandler(xmpp_handlers.CommandHandler):
     logging.info('Received message from: %s' % message.sender)
 
     lines = ['We all need a little help sometimes']
-    lines.extend(commands)
+    lines.extend(self.commands)
 
     message_builder = MessageBuilder()
     for line in lines:

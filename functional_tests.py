@@ -221,3 +221,14 @@ class XmppHandlerTest(BuzzChatBotFunctionalTestCase):
     handler.post_command(message=message)
     expected_item = ' some message'
     self.assertEquals(expected_item, stub.message)
+
+  def test_help_command_lists_available_commands(self):
+    handler = XmppHandler()
+    sender = '1@example.com'
+    message = StubMessage(sender=sender, body='%s' % XmppHandler.HELP_CMD)
+    handler.help_command(message=message)
+
+    self.assertTrue(len(message.message_to_send) > 0)
+    for command in handler.commands:
+      self.assertTrue(command in message.message_to_send, message.message_to_send)
+
