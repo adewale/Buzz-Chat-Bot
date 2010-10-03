@@ -15,25 +15,28 @@ body {
 	font-family: "Trebuchet MS",  "Times New Roman", Serif;
 }
 
+h1 {
+    border-width: 0px;
+    color: #000000;
+    padding: 5px;
+    margin: 5px 5px 5px 5px;
+    text-shadow: 2px 2px 2px #aaa;
+}
+
 h3 {
     /* Reduce the amount of space after section headings */
     margin-bottom: -15px;    
 }
 
-h6 {
-	font-size: 7pt; 
-	font-family: Verdana, Geneva, Arial, Helvetica, sans-serif;
-}
-
 p {
-	color: #000000;
-	background-color: #ffffff;
+    color: #000000;
+    background-color: #ffffff;
 }
 
 a {
-	color:#000000;
+    color:#000000;
 }
 
 a:hover {
-	text-decoration: none;
+    text-decoration: none;
 }
