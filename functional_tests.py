@@ -39,6 +39,16 @@ class StubSimpleBuzzWrapper(simple_buzz_wrapper.SimpleBuzzWrapper):
     return self.url
 
 
+class FrontPageHandlerFunctionalTest(FunctionalTestCase, unittest.TestCase):
+  APPLICATION = main.application
+  def test_front_page_can_be_viewed_without_being_logged_in(self):
+    response = self.get(settings.FRONT_PAGE_HANDLER_URL)
+
+    self.assertOK(response)
+    response.mustcontain("<title>Buzz Chat Bot")
+    response.mustcontain(settings.APP_NAME)
+
+
 class BuzzChatBotFunctionalTestCase(FunctionalTestCase, unittest.TestCase):
   def _setup_subscription(self, sender='foo@example.com',search_term='somestring'):
     search_term = search_term

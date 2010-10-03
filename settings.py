@@ -13,7 +13,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-APP_NAME = "buzzchatbot"
+APP_NAME = "favedby"
 
 #PSHB settings
 # This is the token that will act as a shared secret to verify that this application is the one that registered the given subscription. The hub will send us a challenge containing this token.
@@ -48,5 +48,6 @@ CONSUMER_SECRET = 'anonymous'
 
 # OAuth callback URL
 CALLBACK_URL = 'http://%s.appspot.com/finish_dance' % APP_NAME
-
+PROFILE_HANDLER_URL = '/profile'
+FRONT_PAGE_HANDLER_URL = '/'
 # Installation specific config ends.
