@@ -48,6 +48,12 @@ class FrontPageHandlerFunctionalTest(FunctionalTestCase, unittest.TestCase):
     response.mustcontain("<title>Buzz Chat Bot")
     response.mustcontain(settings.APP_NAME)
 
+  def test_admin_profile_link_is_on_front_page(self):
+    response = self.get(settings.FRONT_PAGE_HANDLER_URL)
+
+    self.assertOK(response)
+    response.mustcontain('href="%s"' % settings.ADMIN_PROFILE_URL)
+
 
 class BuzzChatBotFunctionalTestCase(FunctionalTestCase, unittest.TestCase):
   def _setup_subscription(self, sender='foo@example.com',search_term='somestring'):

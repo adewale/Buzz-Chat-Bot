@@ -41,7 +41,8 @@ class FrontPageHandler(webapp.RequestHandler):
   def get(self):
     template_values = {'commands' : xmpp.XmppHandler.commands,
                        'help_command' : xmpp.XmppHandler.HELP_CMD,
-                        'jabber_id' : '%s@appspot.com' % settings.APP_NAME}
+                       'jabber_id' : '%s@appspot.com' % settings.APP_NAME,
+                       'admin_url' : settings.ADMIN_PROFILE_URL}
     path = os.path.join(os.path.dirname(__file__), 'front_page.html')
     self.response.out.write(template.render(path, template_values))
 
