@@ -249,12 +249,18 @@ class XmppHandler(SlashlessCommandHandlerMixin, webapp.RequestHandler):
       return
     self.message_received(self.xmpp_message)
 
+  def handle_exception(self, exception, debug_mode):
+    super(xmpp_handlers.CommandHandler, self).handle_exception(exception, debug_mode)
+    if self.xmpp_message:
+      self.xmpp_message.reply('Oops. Something went wrong.')
+      logging.error('User visible oops for message: %s' % str(self.xmpp_message.body))
+
   def help_command(self, message=None):
     sdf
     logging.info('Received message from: %s' % message.sender)
 
     lines = ['We all need a little help sometimes']
-    lines.extend(commands)
+    lines.extend(self.commands)
 
     message_builder = MessageBuilder()
     for line in lines:

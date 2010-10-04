@@ -1,0 +1,40 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
+<html> <head>
+<title>Buzz Chat Bot - {{ jabber_id }}</title>
+<link rel="stylesheet" type="text/css" media="screen" href="css/style.css" />
+</head>
+
+<body>
+<h1>Welcome to the Buzz Chat Bot - {{ jabber_id }}</h1>
+
+
+<h3>What does it do?</h3>
+<dl>At the moment it lets you ask for:
+{% for command in commands %}
+<li>{{ command }}</li>
+{% endfor %}
+</dl>
+
+
+<h3>Why does it exist?</h3>
+<dl><a href="http://jaiku.jaiku.com/">Jaiku</a> and <a href="http://friendfeed.com/">Friendfeed</a> have shown that chat interfaces have a number of advantages over web interfaces:
+<li>they're always on</li>
+<li>they're quicker since you can't beat the latency of just switching over to your chat client.</li>
+<li>they're transient so you don't feel inundated if you track lots of keywords or see lots of posts because they all just flow by</li>
+<li>they encourage <a href="http://www.designingsocialinterfaces.com/patterns/Statuscasting">statuscasting</a> which makes for a more conversational experience</li>
+<li>they allow people and brands to conveniently track keywords without having to learn how <a href="http://pubsubhubbub.appspot.com/">PuSH</a> works</li>
+</dl>
+
+<h3>Usage: How to use the bot</h3>
+<ol>
+    <li><a href="/start_dance">Give the bot access to your Buzz account via the magic of OAuth</a></li>
+    <li>Add the bot: {{ jabber_id }} to your Chat or IM client</li>
+    <li>Ask the bot for help by typing <i>{{help_command}}</i></li>
+</ol>
+
+
+<hr></hr>
+<a target="_blank" title="Follow me on Google Buzz" class="google-buzz-button" href="{{ admin_url }}" data-button-style="follow">
+    Follow me on Buzz</a>
+<script type="text/javascript" src="http://www.google.com/buzz/api/button.js"></script>
+</body> </html>

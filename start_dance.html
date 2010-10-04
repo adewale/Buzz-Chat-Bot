@@ -1,0 +1,21 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
+<html> <head>
+<title>Buzz Chat Bot - {{ jabber_id }}</title>
+<link rel="stylesheet" type="text/css" media="screen" href="css/style.css" />
+</head>
+
+<body>
+<h1>Control {{ jabber_id }}'s access to your Buzz account</h1>
+
+{% if access_token_exists %}
+<form action="/delete_tokens" method="post">
+<input type="submit" value="Remove the bot's access to your Buzz account"></input>
+</form>
+{% else %}
+<form action="{{ destination }}" method="post">
+<input type="submit" value="Start using the bot by giving it access to your Buzz account"></input>
+</form>
+{% endif %}
+
+<hr></hr>
+</body> </html>

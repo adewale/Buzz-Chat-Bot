@@ -39,6 +39,22 @@ class StubSimpleBuzzWrapper(simple_buzz_wrapper.SimpleBuzzWrapper):
     return self.url
 
 
+class FrontPageHandlerFunctionalTest(FunctionalTestCase, unittest.TestCase):
+  APPLICATION = main.application
+  def test_front_page_can_be_viewed_without_being_logged_in(self):
+    response = self.get(settings.FRONT_PAGE_HANDLER_URL)
+
+    self.assertOK(response)
+    response.mustcontain("<title>Buzz Chat Bot")
+    response.mustcontain(settings.APP_NAME)
+
+  def test_admin_profile_link_is_on_front_page(self):
+    response = self.get(settings.FRONT_PAGE_HANDLER_URL)
+
+    self.assertOK(response)
+    response.mustcontain('href="%s"' % settings.ADMIN_PROFILE_URL)
+
+
 class BuzzChatBotFunctionalTestCase(FunctionalTestCase, unittest.TestCase):
   def _setup_subscription(self, sender='foo@example.com',search_term='somestring'):
     search_term = search_term
@@ -227,3 +243,14 @@ class XmppHandlerTest(BuzzChatBotFunctionalTestCase):
     handler.post_command(message=message)
     expected_item = ' some message'
     self.assertEquals(expected_item, stub.message)
+
+  def test_help_command_lists_available_commands(self):
+    handler = XmppHandler()
+    sender = '1@example.com'
+    message = StubMessage(sender=sender, body='%s' % XmppHandler.HELP_CMD)
+    handler.help_command(message=message)
+
+    self.assertTrue(len(message.message_to_send) > 0)
+    for command in handler.commands:
+      self.assertTrue(command in message.message_to_send, message.message_to_send)
+

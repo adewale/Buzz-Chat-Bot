@@ -77,7 +77,7 @@ class UserToken(db.Model):
     else:
       return None
 
-class WelcomeHandler(webapp.RequestHandler):
+class DanceStartingHandler(webapp.RequestHandler):
   @login_required
   def get(self):
     logging.info("Request body %s" % self.request.body)
@@ -97,7 +97,7 @@ class WelcomeHandler(webapp.RequestHandler):
       logging.info('Authorisation URL is: %s' % authorisation_url)
       template_values['destination'] = authorisation_url
 
-    path = os.path.join(os.path.dirname(__file__), 'welcome.html')
+    path = os.path.join(os.path.dirname(__file__), 'start_dance.html')
     self.response.out.write(template.render(path, template_values))
 
 
@@ -105,7 +105,7 @@ class TokenDeletionHandler(webapp.RequestHandler):
   def post(self):
     user_token = UserToken.get_current_user_token()
     UserToken.delete(user_token)
-    self.redirect('/')
+    self.redirect(settings.FRONT_PAGE_HANDLER_URL)
 
 
 class DanceFinishingHandler(webapp.RequestHandler):
@@ -123,4 +123,4 @@ class DanceFinishingHandler(webapp.RequestHandler):
     UserToken.put(user_token)
     logging.debug('Access token was: %s' % user_token.access_token_string)
 
-    self.redirect('/profile')
+    self.redirect(settings.PROFILE_HANDLER_URL)

@@ -37,6 +37,15 @@ class ProfileViewingHandler(webapp.RequestHandler):
     self.response.out.write(template.render(path, template_values))
 
 
+class FrontPageHandler(webapp.RequestHandler):
+  def get(self):
+    template_values = {'commands' : xmpp.XmppHandler.commands,
+                       'help_command' : xmpp.XmppHandler.HELP_CMD,
+                       'jabber_id' : '%s@appspot.com' % settings.APP_NAME,
+                       'admin_url' : settings.ADMIN_PROFILE_URL}
+    path = os.path.join(os.path.dirname(__file__), 'front_page.html')
+    self.response.out.write(template.render(path, template_values))
+
 class PostsHandler(webapp.RequestHandler):
   def _get_subscription(self):
     logging.info("Headers were: %s" % str(self.request.headers))
@@ -100,10 +109,11 @@ class PostsHandler(webapp.RequestHandler):
       self.response.set_status(200)
 
 application = webapp.WSGIApplication([
-                                         ('/', oauth_handlers.WelcomeHandler),
-                                         ('/delete_tokens', oauth_handlers.TokenDeletionHandler),
+                                         (settings.FRONT_PAGE_HANDLER_URL, FrontPageHandler),
+                                         (settings.PROFILE_HANDLER_URL, ProfileViewingHandler),
+                                         ('/start_dance', oauth_handlers.DanceStartingHandler),
                                          ('/finish_dance', oauth_handlers.DanceFinishingHandler),
-                                         ('/profile', ProfileViewingHandler),
+                                         ('/delete_tokens', oauth_handlers.TokenDeletionHandler),
                                          ('/posts', PostsHandler),
                                          ('/_ah/xmpp/message/chat/', xmpp.XmppHandler), ],
                                      debug=True)
