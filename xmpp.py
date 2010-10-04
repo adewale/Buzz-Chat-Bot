@@ -15,6 +15,7 @@
 from google.appengine.api import xmpp
 from google.appengine.ext import db
 from google.appengine.ext.webapp import xmpp_handlers
+from google.appengine.ext import webapp
 
 import logging
 import urllib
@@ -46,6 +47,16 @@ class Subscription(db.Model):
 
 
 class Tracker(object):
+  @staticmethod
+  def is_blank(string):
+    """ utility function for determining whether a string is blank (just whitespace)
+    TODO is there already a utility for this? I'm assuming so but couldn't find one
+    """
+    result = re.search( r"(\s*)", string)
+    if result != None:
+      print "is_blank: group(0) = '%s'" % result.group(0)
+      return len(result.group(0)) == len(string)
+    
   def __init__(self, hub_subscriber=pshb.HubSubscriber()):
     self.hub_subscriber =  hub_subscriber
 
@@ -189,7 +200,7 @@ class SlashlessCommandHandlerMixin(xmpp_handlers.CommandHandlerMixin):
         self.unhandled_command(message)
 
 
-class XmppHandler(SlashlessCommandHandlerMixin, xmpp_handlers.BaseHandler):
+class XmppHandler(SlashlessCommandHandlerMixin, webapp.RequestHandler):
   HELP_CMD    = 'help'
   TRACK_CMD   = 'track'
   UNTRACK_CMD = 'untrack'
@@ -211,7 +222,19 @@ class XmppHandler(SlashlessCommandHandlerMixin, xmpp_handlers.BaseHandler):
     print "XmppHandler.__init__"
     self.buzz_wrapper = buzz_wrapper
     
+  def handle_exception(self, exception, debug_mode):
+    """Called if this handler throws an exception during execution.
+
+    Args:
+      exception: the exception that was thrown
+      debug_mode: True if the web application is running in debug mode
+    """
+    super(BaseHandler, self).handle_exception(exception, debug_mode)
+    if self.xmpp_message:
+      self.xmpp_message.reply('Oops. Something went wrong.')
+      
   def post(self):
+    sdfsdf
     print "XmppHandler.post"
     """ Redefines post to create a message from our new SlashlessCommandMessage. 
     TODO xmpp_handlers: redefine the BaseHandler to have a function createMessage which can be 
@@ -227,6 +250,7 @@ class XmppHandler(SlashlessCommandHandlerMixin, xmpp_handlers.BaseHandler):
     self.message_received(self.xmpp_message)
 
   def help_command(self, message=None):
+    sdf
     logging.info('Received message from: %s' % message.sender)
 
     lines = ['We all need a little help sometimes']
@@ -250,6 +274,7 @@ class XmppHandler(SlashlessCommandHandlerMixin, xmpp_handlers.BaseHandler):
     reply(message_builder, message)
 
   def untrack_command(self, message=None):
+    sdf
     logging.info('Received message from: %s' % message.sender)
 
     tracker = Tracker()

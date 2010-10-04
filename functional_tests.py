@@ -71,6 +71,12 @@ class PostsHandlerTest(BuzzChatBotFunctionalTestCase):
 
 
 class XmppHandlerTest(BuzzChatBotFunctionalTestCase):
+  def test_track_command_fails_for_missing_term(self):
+    message = StubMessage(body='%s ' % XmppHandler.TRACK_CMD)
+    handler = XmppHandler()
+    handler.track_command(message=message)
+    self.assertTrue('Untrack failed' in message.message_to_send, message.message_to_send)
+    
   def test_untrack_command_fails_for_missing_subscription_value(self):
     message = StubMessage(body='%s 777' % XmppHandler.UNTRACK_CMD)
     handler = XmppHandler()

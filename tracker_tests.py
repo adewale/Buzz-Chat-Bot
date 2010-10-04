@@ -25,6 +25,17 @@ class StubHubSubscriber(pshb.HubSubscriber):
     self.callback_url = callback_url
 
 class TrackerTest(unittest.TestCase):
+  def test_is_blank_works_on_blank_strings(self):
+    self.assertTrue(Tracker.is_blank(" "))
+    self.assertTrue(Tracker.is_blank("    ")) # has a tab in it
+    self.assertTrue(Tracker.is_blank(""))
+    
+  def test_is_blank_works_on_nonblank_strings(self):
+    self.assertFalse(Tracker.is_blank("  a"))
+    self.assertFalse(Tracker.is_blank("adf    "))
+    self.assertFalse(Tracker.is_blank("  adfas    "))
+    self.assertFalse(Tracker.is_blank("daf-sa"))
+    
   def test_tracker_rejects_empty_search_term(self):
     sender = 'foo@example.com'
     body = XmppHandler.TRACK_CMD
