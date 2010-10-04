@@ -50,21 +50,17 @@ class Tracker(object):
   @staticmethod
   def is_blank(string):
     """ utility function for determining whether a string is blank (just whitespace)
-    TODO is there already a utility for this? I'm assuming so but couldn't find one
     """
-    result = re.search( r"(\s*)", string)
-    if result != None:
-      print "is_blank: group(0) = '%s'" % result.group(0)
-      return len(result.group(0)) == len(string)
-    
+    return (len(string) == 0) or string.isspace()
+
   def __init__(self, hub_subscriber=pshb.HubSubscriber()):
     self.hub_subscriber =  hub_subscriber
 
   def _valid_subscription(self, message_body):
-    return self._extract_search_term(message_body) != ''
+    return not Tracker.is_blank(self._extract_search_term(message_body))
 
   def _extract_search_term(self, message_body):
-    search_term = message_body[len('/track'):]
+    search_term = message_body[len(XmppHandler.TRACK_CMD):]
     return search_term.strip()
 
   def _subscribe(self, message_sender, message_body):
@@ -94,9 +90,11 @@ class Tracker(object):
     if self._valid_subscription(message_body):
       return self._subscribe(message_sender, message_body)
     else:
+      re
       return None
 
-  def _is_number(self, id):
+  @staticmethod
+  def is_number(id):
     if not id:
       return False
     id = id.strip()
@@ -108,7 +106,7 @@ class Tracker(object):
   def untrack(self, message_sender, message_body):
     logging.info('Message is: %s' % message_body)
     id = message_body[len(XmppHandler.UNTRACK_CMD):]
-    if not self._is_number(id):
+    if not Tracker.is_number(id):
       return None
 
     id = id.strip()
@@ -216,6 +214,8 @@ class XmppHandler(SlashlessCommandHandlerMixin, webapp.RequestHandler):
     '%s Tells you which instance of the Buzz Chat Bot you are using' % ABOUT_CMD,
     '%s [some message] Posts that message to Buzz' % POST_CMD
   ]
+  
+  TRACK_FAILED_MSG = 'Sorry there was a problem with your last track command '
 
   
   def __init__(self, buzz_wrapper=simple_buzz_wrapper.SimpleBuzzWrapper()):
@@ -256,7 +256,6 @@ class XmppHandler(SlashlessCommandHandlerMixin, webapp.RequestHandler):
       logging.error('User visible oops for message: %s' % str(self.xmpp_message.body))
 
   def help_command(self, message=None):
-    sdf
     logging.info('Received message from: %s' % message.sender)
 
     lines = ['We all need a little help sometimes']
@@ -276,11 +275,10 @@ class XmppHandler(SlashlessCommandHandlerMixin, webapp.RequestHandler):
     if subscription:
       message_builder.add('Tracking: %s with id: %s' % (subscription.search_term, subscription.id()))
     else:
-      message_builder.add('Sorry there was a problem with your last track command <%s>' % message.body)
+      message_builder.add('%s <%s>' % (XmppHandler.TRACK_FAILED_MSG, message.body))
     reply(message_builder, message)
 
   def untrack_command(self, message=None):
-    sdf
     logging.info('Received message from: %s' % message.sender)
 
     tracker = Tracker()
@@ -324,7 +322,7 @@ class XmppHandler(SlashlessCommandHandlerMixin, webapp.RequestHandler):
       user_token.delete()
       message_builder.add('You (%s) did not complete the process for giving access to your Google Buzz account. Please do so at: http://%s.appspot.com' % (sender, settings.APP_NAME))
     else:
-      message_body = message.body[len('/post'):]
+      message_body = message.body[len(XmppHandler.POST_CMD):]
       url = self.buzz_wrapper.post(sender, message_body)
       message_builder.add('Posted: %s' % url)
     reply(message_builder, message)

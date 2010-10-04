@@ -88,10 +88,10 @@ class PostsHandlerTest(BuzzChatBotFunctionalTestCase):
 
 class XmppHandlerTest(BuzzChatBotFunctionalTestCase):
   def test_track_command_fails_for_missing_term(self):
-    message = StubMessage(body='%s ' % XmppHandler.TRACK_CMD)
+    message = StubMessage(body='%s  ' % XmppHandler.TRACK_CMD)
     handler = XmppHandler()
     handler.track_command(message=message)
-    self.assertTrue('Untrack failed' in message.message_to_send, message.message_to_send)
+    self.assertTrue(XmppHandler.TRACK_FAILED_MSG in message.message_to_send, message.message_to_send)
     
   def test_untrack_command_fails_for_missing_subscription_value(self):
     message = StubMessage(body='%s 777' % XmppHandler.UNTRACK_CMD)
@@ -238,10 +238,10 @@ class XmppHandlerTest(BuzzChatBotFunctionalTestCase):
     user_token = oauth_handlers.UserToken(email_address=sender)
     user_token.access_token_string = 'some thing that looks like an access token from a distance'
     user_token.put()
-    message = StubMessage(sender=sender, body='%s some message' % XmppHandler.POST_CMD)
+    message = StubMessage(sender=sender, body='%s     some message' % XmppHandler.POST_CMD)
 
     handler.post_command(message=message)
-    expected_item = ' some message'
+    expected_item = '     some message'
     self.assertEquals(expected_item, stub.message)
 
   def test_help_command_lists_available_commands(self):
