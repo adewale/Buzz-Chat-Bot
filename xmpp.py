@@ -162,6 +162,7 @@ class SlashlessCommandMessage(xmpp.Message):
     # we can't guarantee this so it's a bit of a mess
     self.__scm_arg = None
     self.__scm_command = None
+    self.__message_to_send = None
     # END TODO
   
   @staticmethod
@@ -205,6 +206,16 @@ class SlashlessCommandMessage(xmpp.Message):
   def arg(self):
     self.__ensure_command_and_args_extracted() 
     return self.__scm_arg
+  
+  @property
+  def message_to_send(self):
+    """ TODO rename: this is actually response_message """ 
+    return self.__message_to_send
+  
+  def reply(self, message_to_send, raw_xml):
+    logging.debug( "SlashlessCommandMessage.reply: message_to_send = %s" % message_to_send)
+    xmpp.Message.reply(self, message_to_send, raw_xml=raw_xml)
+    self.__message_to_send = message_to_send
 
  
 class XmppHandler(webapp.RequestHandler):
@@ -278,7 +289,7 @@ class XmppHandler(webapp.RequestHandler):
     logging.error( "handle_exception: calling webapp.RequestHandler superclass")
     webapp.RequestHandler.handle_exception(self, exception, debug_mode)
     if self.xmpp_message:
-      self.xmpp_message.reply('Oops. Something went wrong.')
+      self.xmpp_message.reply("Oops. Something went wrong. Beta software etc." )
       logging.error('User visible oops for message: %s' % str(self.xmpp_message.body))
 
   def help_command(self, message=None, prompt='We all need a little help sometimes' ):
@@ -305,15 +316,15 @@ class XmppHandler(webapp.RequestHandler):
       message_builder.add( XmppHandler.NOTHING_TO_TRACK_MSG )
     else:
       tracker = Tracker()
-      logging.debug( "track_command: calling tracker.track with body = '%s'")
-      subscription = tracker.track(message.sender, message.body)
+      logging.debug( "track_command: calling tracker.track with term '%s'" % message.arg )
+      subscription = tracker.track(message.sender, message.arg)
       if subscription:
         message_builder.add( XmppHandler.SUBSCRIPTION_SUCCESS_MSG % (subscription.search_term, subscription.id()))
       else:
         message_builder.add('%s <%s>' % (XmppHandler.TRACK_FAILED_MSG, message.body))
         
     reply(message_builder, message)
-    print "message.message_to_send = '%s'" % message.message_to_send
+    logging.debug( "message.message_to_send = '%s'" % message.message_to_send )
     return subscription
 
   def untrack_command(self, message=None):
