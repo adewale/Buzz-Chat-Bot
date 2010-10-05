@@ -161,29 +161,37 @@ class SlashlessCommandMessage(xmpp.Message):
     self.__scm_arg = None
     self.__scm_command = None
     # END TODO
+  
+  @staticmethod
+  def extract_command_and_arg_from_string(string):
+    # match any white space and then a word (cmd) 
+    #  then any white space then everything after that (arg).
+    command = None
+    arg = None
+     
+    results = re.search(r"\s*(\S*\b)\s*(.*)", string) 
+    if results != None:
+      command = results.group(1)
+      arg = results.group(2)
     
+    # we didn't find a command and an arg so maybe we'll just find the command
+    # some commands may not have args 
+    else:
+      results = re.search(r"\s*(\S*\b)\s*", string)
+      if results != None:
+        command = results.group(1)
+        
+    return [command,arg]
+  
   
   def __ensure_command_and_args_extracted(self):
     """ Take the message and identify the command and argument if there is one.
     In the case of a SlashlessCommandMessage, there is always one -- the first word is the command.      
     """    
     # cache the values. 
-    if self.__scm_command != None:
-      return
-    # match any white space and then a word (cmd) 
-    #  then any white space then everything after that (arg). 
-    results = re.search(r"\s*(\S*\b)\s*(.*)", self.body) 
-    if results != None:
-      self.__scm_command = results.group(1)
-      self.__scm_arg = results.group(2)
-    
-    # we didn't find a command and an arg so maybe we'll just find the command
-    # some commands may not have args 
-    else:
-      print "_ensure_command_and_args_extracted: command and args missing for body '%s' so trying just with command" % self.body
-      results = re.search(r"\s*(\S*\b)\s*", self.body)
-      if results != None:
-        self.__scm_command = results.group(1)
+    if self.__scm_command == None:
+      self.__scm_command,self.__scm_arg = SlashlessCommandMessage.extract_command_and_arg_from_string(self.body)
+      print "command = '%s', arg = '%s'" %(self.__scm_command,self.__scm_arg)
     
   # these properties are redefined from that defined in xmpp.Message
   @property 
@@ -220,6 +228,7 @@ class XmppHandler(webapp.RequestHandler):
   
   TRACK_FAILED_MSG    = 'Sorry there was a problem with your last track command '
   UNKNOWN_COMMAND_MSG = "Sorry, '%s' was not understood."
+  SUBSCRIPTION_SUCCESS_MSG = 'Tracking: %s with id: %s'
   
   def __init__(self, buzz_wrapper=simple_buzz_wrapper.SimpleBuzzWrapper()):
     print "XmppHandler.__init__"
@@ -255,11 +264,10 @@ class XmppHandler(webapp.RequestHandler):
       self.xmpp_message.reply('Oops. Something went wrong.')
       
   def post(self):
-    crash-here-please
-    print "XmppHandler.post"
     """ Redefines post to create a message from our new SlashlessCommandMessage. 
     TODO xmpp_handlers: redefine the BaseHandler to have a function createMessage which can be 
     overridden this will avoid the code duplicated below
+    TODO this has no test coverage
     """
     try:
       # CHANGE this is the only bit that has changed from xmpp_handlers.Message 
@@ -294,10 +302,11 @@ class XmppHandler(webapp.RequestHandler):
     subscription = tracker.track(message.sender, message.body)
     message_builder = MessageBuilder()
     if subscription:
-      message_builder.add('Tracking: %s with id: %s' % (subscription.search_term, subscription.id()))
+      message_builder.add( XmppHandler.SUBSCRIPTION_SUCCESS_MSG % (subscription.search_term, subscription.id()))
     else:
       message_builder.add('%s <%s>' % (XmppHandler.TRACK_FAILED_MSG, message.body))
     reply(message_builder, message)
+    return subscription
 
   def untrack_command(self, message=None):
     logging.info('Received message from: %s' % message.sender)

@@ -27,6 +27,7 @@ class StubMessage(object):
   def __init__(self, sender='foo@example.com', body=''):
     self.sender = sender
     self.body = body
+    #self.command,self.arg = SlashlessCommandMessage.extract_command_and_arg_from_string(body)
 
   def reply(self, message_to_send, raw_xml=False):
     self.message_to_send = message_to_send
@@ -72,7 +73,7 @@ class PostsHandlerTest(BuzzChatBotFunctionalTestCase):
     subscription = self._setup_subscription()
     challenge = 'somechallengetoken'
     topic = 'https://www.googleapis.com/buzz/v1/activities/track?q=somestring'
-    response = self.get('/posts?hub.challenge=%s&hub.mode=%s&hub.topic=%s&id=%s' % (challenge, 'subscribe', topic, subscription.id()))
+    response = self.get('/posts?hub.challenge=%s&hub.mode=%s&hub.topic=%s&id=%s' % (challenge, 'subscribe', topic, subscription.id))
     self.assertOK(response)
     response.mustcontain(challenge)
 
@@ -81,7 +82,7 @@ class PostsHandlerTest(BuzzChatBotFunctionalTestCase):
     subscription.delete()
     challenge = 'somechallengetoken'
     topic = 'https://www.googleapis.com/buzz/v1/activities/track?q=somestring'
-    response = self.get('/posts?hub.challenge=%s&hub.mode=%s&hub.topic=%s&id=%s' % (challenge, 'unsubscribe', topic, subscription.id()))
+    response = self.get('/posts?hub.challenge=%s&hub.mode=%s&hub.topic=%s&id=%s' % (challenge, 'unsubscribe', topic, subscription.id))
     self.assertOK(response)
     response.mustcontain(challenge)
 
@@ -89,7 +90,13 @@ class PostsHandlerTest(BuzzChatBotFunctionalTestCase):
 class XmppHandlerTest(BuzzChatBotFunctionalTestCase):
 #  def test_track_command_succeeds_for_varying_combinations_of_whitespace(self):
 #    arg = 'Some day my prints will come'
-#    message = SlashlessCommandMessage(body='%s  %s ' % (XmppHandler.TRACK_CMD,arg))
+#    message = StubMessage( body='%s  %s  ' % (XmppHandler.TRACK_CMD,arg) )
+#    handler = XmppHandler()
+#    subscription = handler.track_command(message=message)
+#    self.assertEqual(message.message_to_send, XmppHandler.SUBSCRIPTION_SUCCESS_MSG % (message.arg,subscription.id))
+#    # now as this is real, remove it again
+#    handler = XmppHandler()
+#    handler.untrack_command('%s %s' % (XmppHandler.UNTRACK_CMD, subscription.id))
     
     
   def test_track_command_fails_for_missing_term(self):
