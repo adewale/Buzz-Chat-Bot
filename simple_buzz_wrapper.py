@@ -24,6 +24,16 @@ class SimpleBuzzWrapper(object):
       self.current_user_token = user_token
     self.builder = buzz_gae_client.BuzzGaeClient(settings.CONSUMER_KEY, settings.CONSUMER_SECRET)
 
+  def search(self, sender, message_body ):
+    """ TODO(julian): standardize methods for accessing api clients once it's clear what the implications
+    of the 2 paths (email, user_token) are """
+    if message_body is None or message_body.strip() is '':
+      return None
+
+    user_token = oauth_handlers.UserToken.find_by_email_address(sender)
+    api_client = self.builder.build_api_client(user_token.get_access_token())
+
+  
   def post(self, sender, message_body):
     if message_body is None or message_body.strip() is '':
       return None

@@ -73,7 +73,7 @@ class PostsHandlerTest(BuzzChatBotFunctionalTestCase):
     subscription = self._setup_subscription()
     challenge = 'somechallengetoken'
     topic = 'https://www.googleapis.com/buzz/v1/activities/track?q=somestring'
-    response = self.get('/posts?hub.challenge=%s&hub.mode=%s&hub.topic=%s&id=%s' % (challenge, 'subscribe', topic, subscription.id))
+    response = self.get('/posts?hub.challenge=%s&hub.mode=%s&hub.topic=%s&id=%s' % (challenge, 'subscribe', topic, subscription.id()))
     self.assertOK(response)
     response.mustcontain(challenge)
 
@@ -82,7 +82,7 @@ class PostsHandlerTest(BuzzChatBotFunctionalTestCase):
     subscription.delete()
     challenge = 'somechallengetoken'
     topic = 'https://www.googleapis.com/buzz/v1/activities/track?q=somestring'
-    response = self.get('/posts?hub.challenge=%s&hub.mode=%s&hub.topic=%s&id=%s' % (challenge, 'unsubscribe', topic, subscription.id))
+    response = self.get('/posts?hub.challenge=%s&hub.mode=%s&hub.topic=%s&id=%s' % (challenge, 'unsubscribe', topic, subscription.id()))
     self.assertOK(response)
     response.mustcontain(challenge)
 
@@ -93,7 +93,7 @@ class XmppHandlerTest(BuzzChatBotFunctionalTestCase):
 #    message = StubMessage( body='%s  %s  ' % (XmppHandler.TRACK_CMD,arg) )
 #    handler = XmppHandler()
 #    subscription = handler.track_command(message=message)
-#    self.assertEqual(message.message_to_send, XmppHandler.SUBSCRIPTION_SUCCESS_MSG % (message.arg,subscription.id))
+#    self.assertEqual(message.message_to_send, XmppHandler.SUBSCRIPTION_SUCCESS_MSG % (message.arg,subscription.id()))
 #    # now as this is real, remove it again
 #    handler = XmppHandler()
 #    handler.untrack_command('%s %s' % (XmppHandler.UNTRACK_CMD, subscription.id))

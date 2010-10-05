@@ -16,14 +16,14 @@ import simple_buzz_wrapper
 import unittest
 
 class SimpleBuzzWrapperTest(unittest.TestCase):
-  def test_wrapper_rejects_empty_message(self):
+  def test_wrapper_rejects_empty_post(self):
     wrapper = simple_buzz_wrapper.SimpleBuzzWrapper()
     self.assertEquals(None, wrapper.post('sender@example.org', ''))
 
-  def test_wrapper_rejects_messsage_containing_only_whitespace(self):
+  def test_wrapper_rejects_post_containing_only_whitespace(self):
     wrapper = simple_buzz_wrapper.SimpleBuzzWrapper()
     self.assertEquals(None, wrapper.post('sender@example.org', '            '))
 
-  def test_wrapper_rejects_none_message(self):
+  def test_wrapper_rejects_none_post(self):
     wrapper = simple_buzz_wrapper.SimpleBuzzWrapper()
     self.assertEquals(None, wrapper.post('sender@example.org', None))

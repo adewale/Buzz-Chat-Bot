@@ -104,7 +104,7 @@ class Tracker(object):
 
   def untrack(self, message_sender, id):
     """ Given an id, untrack takes it and attempts to unsubscribe from the list of tracked items.
-    TODO: you should be able to untrack <term> directly.  """
+    TODO(julian): you should be able to untrack <term> directly.  """
     logging.info("Tracker.untrack: id is: '%s'" % id)
     id_as_int = Tracker.extract_number(id)
     if id_as_int == None:
@@ -154,7 +154,7 @@ class SlashlessCommandMessage(xmpp.Message):
     #super(xmpp.Message, self).__init__(vars) -- silently fails. #pythonwtf
     xmpp.Message.__init__(self, vars)
     
-    #TODO make arg and command protected. because __arg and __command are hidden as private
+    #TODO(julian) make arg and command protected. because __arg and __command are hidden as private
     #in xmpp.Message, we have to define our own separate instances of these variables
     #even though all we do is change the property accessors for them.
     # scm = slashless command message
@@ -209,7 +209,7 @@ class SlashlessCommandMessage(xmpp.Message):
   
   @property
   def message_to_send(self):
-    """ TODO rename: this is actually response_message """ 
+    """ TODO(julian) rename: this is actually response_message """ 
     return self.__message_to_send
   
   def reply(self, message_to_send, raw_xml):
@@ -271,9 +271,9 @@ class XmppHandler(webapp.RequestHandler):
       
   def post(self):
     """ Redefines post to create a message from our new SlashlessCommandMessage. 
-    TODO xmpp_handlers: redefine the BaseHandler to have a function createMessage which can be 
+    TODO(julian) xmpp_handlers: redefine the BaseHandler to have a function createMessage which can be 
     overridden this will avoid the code duplicated below
-    TODO this has no test coverage
+    TODO(julian) this has no test coverage
     """
     logging.info("Received chat msg, raw post =  '%s'" % self.request.POST)
     try:
