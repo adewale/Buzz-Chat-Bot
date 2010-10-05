@@ -28,6 +28,7 @@ class StubMessage(object):
     self.sender = sender
     self.body = body
     self.command,self.arg = SlashlessCommandMessage.extract_command_and_arg_from_string(body)
+    self.message_to_send = None
 
   def reply(self, message_to_send, raw_xml=False):
     self.message_to_send = message_to_send
@@ -110,7 +111,7 @@ class XmppHandlerTest(BuzzChatBotFunctionalTestCase):
     message = StubMessage(body='%s  ' % XmppHandler.TRACK_CMD)
     handler = XmppHandler()
     handler.track_command(message=message)
-    self.assertTrue(XmppHandler.NOTHING_TO_TRACK in message.message_to_send, message.message_to_send)
+    self.assertTrue(XmppHandler.NOTHING_TO_TRACK_MSG in message.message_to_send, message.message_to_send)
     
   def test_untrack_command_fails_for_missing_subscription_value(self):
     message = StubMessage(body='%s 777' % XmppHandler.UNTRACK_CMD)
@@ -199,7 +200,7 @@ class XmppHandlerTest(BuzzChatBotFunctionalTestCase):
     sender = '1@example.com'
     message = StubMessage(sender=sender, body='%s' % XmppHandler.LIST_CMD)
     handler.list_command(message=message)
-    expected_item = 'No subscriptions'
+    expected_item = XmppHandler.LIST_NOT_TRACKING_ANYTHING_MSG
     self.assertTrue(len(message.message_to_send) > 0)
     self.assertTrue(expected_item in message.message_to_send, message.message_to_send)
 

@@ -18,4 +18,5 @@ Work out how to handle location-based Track and complex searches. Perhaps using 
 Use Bob Wyman's trick where /track initially does a /search and gives you the first 10 results to verify that it's worked
 File a bug for language indexing in search
 File a bug for search by actor.id
-
+Allow untrack to accept a search term as well as an id
+Allow for a stopword list -- useful for popular terms

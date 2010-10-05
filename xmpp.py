@@ -57,16 +57,11 @@ class Tracker(object):
   def __init__(self, hub_subscriber=pshb.HubSubscriber()):
     self.hub_subscriber =  hub_subscriber
 
-  def _valid_subscription(self, message_body):
-    return not Tracker.is_blank(self._extract_search_term(message_body))
+  def _valid_subscription(self, search_term):
+    return not Tracker.is_blank(search_term)
 
-  def _extract_search_term(self, message_body):
-    search_term = message_body[len(XmppHandler.TRACK_CMD):]
-    return search_term.strip()
-
-  def _subscribe(self, message_sender, message_body):
+  def _subscribe(self, message_sender, search_term):
     message_sender = extract_sender_email_address(message_sender)
-    search_term = self._extract_search_term(message_body)
     url = self._build_subscription_url(search_term)
     logging.info('Subscribing to: %s for user: %s' % (url, message_sender))
 
@@ -87,33 +82,39 @@ class Tracker(object):
     search_term = urllib.quote(search_term)
     return 'https://www.googleapis.com/buzz/v1/activities/track?q=%s' % search_term
 
-  def track(self, message_sender, message_body):
-    if self._valid_subscription(message_body):
-      return self._subscribe(message_sender, message_body)
+  def track(self, message_sender, search_term):
+    if self._valid_subscription(search_term):
+      return self._subscribe(message_sender, search_term)
     else:
       return None
 
   @staticmethod
-  def is_number(id):
-    if not id:
-      return False
-    id = id.strip()
-    for char in id:
-      if not char.isdigit():
-        return False
-    return True
+  def extract_number(id):
+    """ some jiggery pokery to get the number. TODO there must be libraries for this kind of thing"""
+    if id == None:
+      return None
+    
+    if type(id) == type(int()):
+      return id
+    try:
+      id = int(id)
+    except ValueError, e:
+      return None
+    return id
 
-  def untrack(self, message_sender, message_body):
-    logging.info('Message is: %s' % message_body)
-    id = message_body[len(XmppHandler.UNTRACK_CMD):]
-    if not Tracker.is_number(id):
+  def untrack(self, message_sender, id):
+    """ Given an id, untrack takes it and attempts to unsubscribe from the list of tracked items.
+    TODO: you should be able to untrack <term> directly.  """
+    logging.info("Tracker.untrack: id is: '%s'" % id)
+    id_as_int = Tracker.extract_number(id)
+    if id_as_int == None:
+      # todo do a subscription lookup by name here
       return None
 
-    id = id.strip()
-    subscription = Subscription.get_by_id(int(id))
-    logging.info('Subscripton: %s' % str(subscription))
+    subscription = Subscription.get_by_id(id_as_int)
     if not subscription:
       return None
+    logging.info('Subscripton: %s' % str(subscription))
 
     if subscription.subscriber != extract_sender_email_address(message_sender):
       return None
@@ -227,13 +228,13 @@ class XmppHandler(webapp.RequestHandler):
     '%s [some message] Posts that message to Buzz' % POST_CMD
   ]
   
-  TRACK_FAILED_MSG          = 'Sorry there was a problem with that track command '
-  NOTHING_TO_TRACK_MSG      = "To track a phrase on buzz, you need to enter the phrase :) Please type: track <your phrase to track>" 
-  UNKNOWN_COMMAND_MSG       = "Sorry, '%s' was not understood. Here are a list of the things you can do:"
-  SUBSCRIPTION_SUCCESS_MSG  = 'Tracking: %s with id: %s'
-  
+  TRACK_FAILED_MSG                = 'Sorry there was a problem with that track command '
+  NOTHING_TO_TRACK_MSG            = "To track a phrase on buzz, you need to enter the phrase :) Please type: track <your phrase to track>" 
+  UNKNOWN_COMMAND_MSG             = "Sorry, '%s' was not understood. Here are a list of the things you can do:"
+  SUBSCRIPTION_SUCCESS_MSG        = 'Tracking: %s with id: %s'
+  LIST_NOT_TRACKING_ANYTHING_MSG  = 'You are not tracking anything. To track when a word or phrase appears in Buzz, enter: track <thing of interest>'
+
   def __init__(self, buzz_wrapper=simple_buzz_wrapper.SimpleBuzzWrapper()):
-    print "XmppHandler.__init__"
     self.buzz_wrapper = buzz_wrapper
     
   def unhandled_command(self, message):
@@ -304,19 +305,22 @@ class XmppHandler(webapp.RequestHandler):
       message_builder.add( XmppHandler.NOTHING_TO_TRACK_MSG )
     else:
       tracker = Tracker()
+      logging.debug( "track_command: calling tracker.track with body = '%s'")
       subscription = tracker.track(message.sender, message.body)
       if subscription:
         message_builder.add( XmppHandler.SUBSCRIPTION_SUCCESS_MSG % (subscription.search_term, subscription.id()))
       else:
         message_builder.add('%s <%s>' % (XmppHandler.TRACK_FAILED_MSG, message.body))
-      reply(message_builder, message)
+        
+    reply(message_builder, message)
+    print "message.message_to_send = '%s'" % message.message_to_send
     return subscription
 
   def untrack_command(self, message=None):
     logging.info('Received message from: %s' % message.sender)
 
     tracker = Tracker()
-    subscription = tracker.untrack(message.sender, message.body)
+    subscription = tracker.untrack(message.sender, message.arg)
     message_builder = MessageBuilder()
     if subscription:
       message_builder.add('No longer tracking: %s with id: %s' % (subscription.search_term, subscription.id()))
@@ -334,7 +338,7 @@ class XmppHandler(webapp.RequestHandler):
       for subscription in subscriptions_query:
         message_builder.add('Search term: %s with id: %s' % (subscription.search_term, subscription.id()))
     else:
-      message_builder.add('You are not tracking anything. To track when a word or phrase appears in Buzz, enter: track <thing of interest>')
+      message_builder.add(XmppHandler.LIST_NOT_TRACKING_ANYTHING_MSG)
     reply(message_builder, message)
 
   def about_command(self, message):
