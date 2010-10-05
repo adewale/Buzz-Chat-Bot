@@ -26,6 +26,7 @@ class StubHubSubscriber(pshb.HubSubscriber):
 
 class TrackerTest(unittest.TestCase):
   def test_is_blank_works_on_blank_strings(self):
+    self.assertTrue(Tracker.is_blank(None))
     self.assertTrue(Tracker.is_blank(" "))
     self.assertTrue(Tracker.is_blank("    ")) # has a tab in it
     self.assertTrue(Tracker.is_blank(""))

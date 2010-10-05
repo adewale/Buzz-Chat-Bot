@@ -17,6 +17,7 @@ from google.appengine.ext import db
 from google.appengine.ext.webapp import xmpp_handlers
 from google.appengine.ext import webapp
 
+
 import logging
 import urllib
 import oauth_handlers
@@ -51,7 +52,7 @@ class Tracker(object):
   def is_blank(string):
     """ utility function for determining whether a string is blank (just whitespace)
     """
-    return (len(string) == 0) or string.isspace()
+    return (string == None) or (len(string) == 0) or string.isspace()
 
   def __init__(self, hub_subscriber=pshb.HubSubscriber()):
     self.hub_subscriber =  hub_subscriber
@@ -213,7 +214,7 @@ class XmppHandler(webapp.RequestHandler):
   TRACK_CMD   = 'track'
   UNTRACK_CMD = 'untrack'
   
-  PERMITTED_COMMANDS = [ABOUT_CMD,HELP_CMD,LIST_CMD,POST_CMD,TRACK_CMD, UNTRACK_CMD]
+  PERMITTED_COMMANDS = [ABOUT_CMD,HELP_CMD,LIST_CMD,POST_CMD,TRACK_CMD,UNTRACK_CMD]
 
   #this should be called COMMAND_HELP_MSG_LIST but App Engine requires this specific name!
   # make this dependency explicit. 
@@ -226,17 +227,18 @@ class XmppHandler(webapp.RequestHandler):
     '%s [some message] Posts that message to Buzz' % POST_CMD
   ]
   
-  TRACK_FAILED_MSG    = 'Sorry there was a problem with your last track command '
-  UNKNOWN_COMMAND_MSG = "Sorry, '%s' was not understood."
-  SUBSCRIPTION_SUCCESS_MSG = 'Tracking: %s with id: %s'
+  TRACK_FAILED_MSG          = 'Sorry there was a problem with that track command '
+  NOTHING_TO_TRACK_MSG      = "To track a phrase on buzz, you need to enter the phrase :) Please type: track <your phrase to track>" 
+  UNKNOWN_COMMAND_MSG       = "Sorry, '%s' was not understood. Here are a list of the things you can do:"
+  SUBSCRIPTION_SUCCESS_MSG  = 'Tracking: %s with id: %s'
   
   def __init__(self, buzz_wrapper=simple_buzz_wrapper.SimpleBuzzWrapper()):
     print "XmppHandler.__init__"
     self.buzz_wrapper = buzz_wrapper
     
   def unhandled_command(self, message):
-    """ User entered a command that is not recognised. """ 
-    message.reply(UNKNOWN_COMMAND_MSG % message )
+    """ User entered a command that is not recognised. Tell them this and show help""" 
+    self.help_command(message, XmppHandler.UNKNOWN_COMMAND_MSG % message.command )
     
   def message_received(self, message):
     """ Take the message we've received and dispatch it to the appropriate command handler
@@ -249,19 +251,11 @@ class XmppHandler(webapp.RequestHandler):
       handler = getattr(self, handler_name, None)
       if handler:
         handler(message)
-    self.unhandled_command(message)
-
-
-  def handle_exception(self, exception, debug_mode):
-    """Called if this handler throws an exception during execution.
-
-    Args:
-      exception: the exception that was thrown
-      debug_mode: True if the web application is running in debug mode
-    """
-    super(BaseHandler, self).handle_exception(exception, debug_mode)
-    if self.xmpp_message:
-      self.xmpp_message.reply('Oops. Something went wrong.')
+      else:
+        self.unhandled_command(message)
+    else:
+      self.unhandled_command(message)
+      
       
   def post(self):
     """ Redefines post to create a message from our new SlashlessCommandMessage. 
@@ -269,6 +263,7 @@ class XmppHandler(webapp.RequestHandler):
     overridden this will avoid the code duplicated below
     TODO this has no test coverage
     """
+    logging.info("Received chat msg, raw post =  '%s'" % self.request.POST)
     try:
       # CHANGE this is the only bit that has changed from xmpp_handlers.Message 
       self.xmpp_message = SlashlessCommandMessage(self.request.POST)
@@ -279,33 +274,42 @@ class XmppHandler(webapp.RequestHandler):
     self.message_received(self.xmpp_message)
 
   def handle_exception(self, exception, debug_mode):
-    super(xmpp_handlers.CommandHandler, self).handle_exception(exception, debug_mode)
+    logging.error( "handle_exception: calling webapp.RequestHandler superclass")
+    webapp.RequestHandler.handle_exception(self, exception, debug_mode)
     if self.xmpp_message:
       self.xmpp_message.reply('Oops. Something went wrong.')
       logging.error('User visible oops for message: %s' % str(self.xmpp_message.body))
 
-  def help_command(self, message=None):
+  def help_command(self, message=None, prompt='We all need a little help sometimes' ):
+    """ print out the help command. Optionally accepts a message builder
+    so help can be printed out if the user looks like they're having trouble """
     logging.info('Received message from: %s' % message.sender)
 
-    lines = ['We all need a little help sometimes']
+    lines = [prompt]
     lines.extend(self.commands)
-
     message_builder = MessageBuilder()
+
     for line in lines:
       message_builder.add(line)
     reply(message_builder, message)
 
   def track_command(self, message=None):
-    logging.info('Received message from: %s' % message.sender)
-
-    tracker = Tracker()
-    subscription = tracker.track(message.sender, message.body)
+    """ start tracking a phrase against the Buzz API. message must be a valid
+    xmpp.Message or subclass and cannot be null. """
+    logging.debug('Received message from: %s' % message.sender)
+    subscription = None
+    
     message_builder = MessageBuilder()
-    if subscription:
-      message_builder.add( XmppHandler.SUBSCRIPTION_SUCCESS_MSG % (subscription.search_term, subscription.id()))
+    if message.arg == '':      
+      message_builder.add( XmppHandler.NOTHING_TO_TRACK_MSG )
     else:
-      message_builder.add('%s <%s>' % (XmppHandler.TRACK_FAILED_MSG, message.body))
-    reply(message_builder, message)
+      tracker = Tracker()
+      subscription = tracker.track(message.sender, message.body)
+      if subscription:
+        message_builder.add( XmppHandler.SUBSCRIPTION_SUCCESS_MSG % (subscription.search_term, subscription.id()))
+      else:
+        message_builder.add('%s <%s>' % (XmppHandler.TRACK_FAILED_MSG, message.body))
+      reply(message_builder, message)
     return subscription
 
   def untrack_command(self, message=None):
@@ -330,7 +334,7 @@ class XmppHandler(webapp.RequestHandler):
       for subscription in subscriptions_query:
         message_builder.add('Search term: %s with id: %s' % (subscription.search_term, subscription.id()))
     else:
-      message_builder.add('No subscriptions')
+      message_builder.add('You are not tracking anything. To track when a word or phrase appears in Buzz, enter: track <thing of interest>')
     reply(message_builder, message)
 
   def about_command(self, message):

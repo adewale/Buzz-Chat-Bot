@@ -4,12 +4,12 @@ If it breaks you get to keep both pieces.
 What does it do?
 ================
 At the moment it lets you ask for:
-/help Prints out this message
-/track [search term] Starts tracking the given search term and returns the id for your subscription
-/untrack [id] Removes your subscription for that id
-/list Lists all search terms and ids currently being tracked by you
-/about Tells you which instance of the Buzz Chat Bot you are using
-/post [some message] Posts that message to Buzz
+help Prints out this message
+track [search term] Starts tracking the given search term and returns the id for your subscription
+untrack [id] Removes your subscription for that id
+list Lists all search terms and ids currently being tracked by you
+about Tells you which instance of the Buzz Chat Bot you are using
+post [some message] Posts that message to Buzz
 
 
 Why does it exist?

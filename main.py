@@ -60,6 +60,7 @@ class PostsHandler(webapp.RequestHandler):
     logging.info('Request: %s' % str(self.request))
     logging.debug("New content: %s" % self.request.body)
     id = self.request.get('id')
+    logging.debug("Request id = '%s'", id)
 
     # If this is a hub challenge
     if self.request.get('hub.challenge'):
@@ -85,6 +86,7 @@ class PostsHandler(webapp.RequestHandler):
     logging.info('Request: %s' % str(self.request))
     logging.debug("New content: %s" % self.request.body)
     id = self.request.get('id')
+    logging.debug("Request id = '%s'", id)
 
     subscription = xmpp.Subscription.get_by_id(int(id))
     if not subscription:

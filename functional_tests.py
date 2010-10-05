@@ -27,7 +27,7 @@ class StubMessage(object):
   def __init__(self, sender='foo@example.com', body=''):
     self.sender = sender
     self.body = body
-    #self.command,self.arg = SlashlessCommandMessage.extract_command_and_arg_from_string(body)
+    self.command,self.arg = SlashlessCommandMessage.extract_command_and_arg_from_string(body)
 
   def reply(self, message_to_send, raw_xml=False):
     self.message_to_send = message_to_send
@@ -38,8 +38,7 @@ class StubSimpleBuzzWrapper(simple_buzz_wrapper.SimpleBuzzWrapper):
   def post(self, sender, message_body):
     self.message = message_body
     return self.url
-
-
+  
 class FrontPageHandlerFunctionalTest(FunctionalTestCase, unittest.TestCase):
   APPLICATION = main.application
   def test_front_page_can_be_viewed_without_being_logged_in(self):
@@ -99,11 +98,19 @@ class XmppHandlerTest(BuzzChatBotFunctionalTestCase):
 #    handler.untrack_command('%s %s' % (XmppHandler.UNTRACK_CMD, subscription.id))
     
     
+  def test_unhandled_command_shows_correct_error(self):
+    command = 'wibble'
+    message = StubMessage(body=command)
+    handler = XmppHandler()
+    handler.message_received(message)
+    self.assertTrue(XmppHandler.UNKNOWN_COMMAND_MSG % command in message.message_to_send, message.message_to_send)
+    
+    
   def test_track_command_fails_for_missing_term(self):
     message = StubMessage(body='%s  ' % XmppHandler.TRACK_CMD)
     handler = XmppHandler()
     handler.track_command(message=message)
-    self.assertTrue(XmppHandler.TRACK_FAILED_MSG in message.message_to_send, message.message_to_send)
+    self.assertTrue(XmppHandler.NOTHING_TO_TRACK in message.message_to_send, message.message_to_send)
     
   def test_untrack_command_fails_for_missing_subscription_value(self):
     message = StubMessage(body='%s 777' % XmppHandler.UNTRACK_CMD)
