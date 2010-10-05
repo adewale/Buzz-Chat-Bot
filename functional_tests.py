@@ -17,7 +17,7 @@ import unittest
 
 from gaetestbed import FunctionalTestCase
 from tracker_tests import StubHubSubscriber
-from xmpp import Tracker, XmppHandler
+from xmpp import Tracker, XmppHandler, SlashlessCommandMessage
 
 import oauth_handlers
 import settings
@@ -87,6 +87,11 @@ class PostsHandlerTest(BuzzChatBotFunctionalTestCase):
 
 
 class XmppHandlerTest(BuzzChatBotFunctionalTestCase):
+#  def test_track_command_succeeds_for_varying_combinations_of_whitespace(self):
+#    arg = 'Some day my prints will come'
+#    message = SlashlessCommandMessage(body='%s  %s ' % (XmppHandler.TRACK_CMD,arg))
+    
+    
   def test_track_command_fails_for_missing_term(self):
     message = StubMessage(body='%s  ' % XmppHandler.TRACK_CMD)
     handler = XmppHandler()

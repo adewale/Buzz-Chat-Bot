@@ -90,7 +90,6 @@ class Tracker(object):
     if self._valid_subscription(message_body):
       return self._subscribe(message_sender, message_body)
     else:
-      re
       return None
 
   @staticmethod
@@ -149,63 +148,67 @@ class SlashlessCommandMessage(xmpp.Message):
   Design notes: it uses re for tokenization which is a step up
   from how Message works (that expects a single space character) 
   """
+  def __init__(self, vars):
+    #super(xmpp.Message, self).__init__(vars) -- silently fails. #pythonwtf
+    xmpp.Message.__init__(self, vars)
+    
+    #TODO make arg and command protected. because __arg and __command are hidden as private
+    #in xmpp.Message, we have to define our own separate instances of these variables
+    #even though all we do is change the property accessors for them.
+    # scm = slashless command message
+    # luckily __arg and __command aren't used elsewhere in Message but
+    # we can't guarantee this so it's a bit of a mess
+    self.__scm_arg = None
+    self.__scm_command = None
+    # END TODO
+    
   
   def __ensure_command_and_args_extracted(self):
     """ Take the message and identify the command and argument if there is one.
     In the case of a SlashlessCommandMessage, there is always one -- the first word is the command.      
-    """
-    
+    """    
     # cache the values. 
-    if self.__arg != None:
+    if self.__scm_command != None:
       return
     # match any white space and then a word (cmd) 
     #  then any white space then everything after that (arg). 
-    results = re.search(r"\s(\S*\b)\s*(.*)", self.__body) 
-    self.__command = results.group(1)
-    self.__arg = results.group(2)
+    results = re.search(r"\s*(\S*\b)\s*(.*)", self.body) 
+    if results != None:
+      self.__scm_command = results.group(1)
+      self.__scm_arg = results.group(2)
     
+    # we didn't find a command and an arg so maybe we'll just find the command
+    # some commands may not have args 
+    else:
+      print "_ensure_command_and_args_extracted: command and args missing for body '%s' so trying just with command" % self.body
+      results = re.search(r"\s*(\S*\b)\s*", self.body)
+      if results != None:
+        self.__scm_command = results.group(1)
+    
+  # these properties are redefined from that defined in xmpp.Message
   @property 
   def command(self):
     self.__ensure_command_and_args_extracted() 
-    #return super(xmpp.Message, self)
-    return self.__command
+    return self.__scm_command
   
   @property 
   def arg(self):
     self.__ensure_command_and_args_extracted() 
-    #return super(xmpp.Message, self)
-    return self.__arg
+    return self.__scm_arg
 
  
-class SlashlessCommandHandlerMixin(xmpp_handlers.CommandHandlerMixin):
-  """A command handler for XMPP bots that does not require a slash char '/' at beginning
-  This makes the most sense when you're implementing a pure bot -- there's no context switch.  
-  TODO to do this right would mean overriding xmpp.Message.command as this code is now 
-  used but overridden. 
-  """
-
-  def message_received(self, message):
-    """Called when a message is sent to the XMPP bot.
-    Args:
-      message: Message: The message that was sent by the user.
-    """
-    if message.command:
-      handler_name = '%s_command' % (message.command,)
-      handler = getattr(self, handler_name, None)
-      if handler:
-        handler(message)
-      else:
-        self.unhandled_command(message)
-
-
-class XmppHandler(SlashlessCommandHandlerMixin, webapp.RequestHandler):
+class XmppHandler(webapp.RequestHandler):
+  ABOUT_CMD   = 'about'
   HELP_CMD    = 'help'
+  LIST_CMD    = 'list'
+  POST_CMD    = 'post'
   TRACK_CMD   = 'track'
   UNTRACK_CMD = 'untrack'
-  LIST_CMD    = 'list'
-  ABOUT_CMD   = 'about'
-  POST_CMD    = 'post'
+  
+  PERMITTED_COMMANDS = [ABOUT_CMD,HELP_CMD,LIST_CMD,POST_CMD,TRACK_CMD, UNTRACK_CMD]
 
+  #this should be called COMMAND_HELP_MSG_LIST but App Engine requires this specific name!
+  # make this dependency explicit. 
   commands = [
     '%s Prints out this message' % HELP_CMD,
     '%s [search term] Starts tracking the given search term and returns the id for your subscription' % TRACK_CMD,
@@ -215,13 +218,31 @@ class XmppHandler(SlashlessCommandHandlerMixin, webapp.RequestHandler):
     '%s [some message] Posts that message to Buzz' % POST_CMD
   ]
   
-  TRACK_FAILED_MSG = 'Sorry there was a problem with your last track command '
-
+  TRACK_FAILED_MSG    = 'Sorry there was a problem with your last track command '
+  UNKNOWN_COMMAND_MSG = "Sorry, '%s' was not understood."
   
   def __init__(self, buzz_wrapper=simple_buzz_wrapper.SimpleBuzzWrapper()):
     print "XmppHandler.__init__"
     self.buzz_wrapper = buzz_wrapper
     
+  def unhandled_command(self, message):
+    """ User entered a command that is not recognised. """ 
+    message.reply(UNKNOWN_COMMAND_MSG % message )
+    
+  def message_received(self, message):
+    """ Take the message we've received and dispatch it to the appropriate command handler
+    using introspection. E.g. if the command is 'track' it will map to track_command. 
+    Args:
+      message: Message: The message that was sent by the user.
+    """
+    if message.command and message.command in XmppHandler.PERMITTED_COMMANDS:
+      handler_name = '%s_command' % (message.command,)
+      handler = getattr(self, handler_name, None)
+      if handler:
+        handler(message)
+    self.unhandled_command(message)
+
+
   def handle_exception(self, exception, debug_mode):
     """Called if this handler throws an exception during execution.
 
@@ -234,7 +255,7 @@ class XmppHandler(SlashlessCommandHandlerMixin, webapp.RequestHandler):
       self.xmpp_message.reply('Oops. Something went wrong.')
       
   def post(self):
-    sdfsdf
+    crash-here-please
     print "XmppHandler.post"
     """ Redefines post to create a message from our new SlashlessCommandMessage. 
     TODO xmpp_handlers: redefine the BaseHandler to have a function createMessage which can be 
