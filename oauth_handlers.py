@@ -17,6 +17,7 @@ from google.appengine.ext import webapp
 from google.appengine.ext.webapp import template
 from google.appengine.ext.webapp.util import login_required
 from google.appengine.api import users
+from google.appengine.api import xmpp
 
 import buzz_gae_client
 import logging
@@ -122,5 +123,11 @@ class DanceFinishingHandler(webapp.RequestHandler):
     user_token.set_access_token(access_token)
     UserToken.put(user_token)
     logging.debug('Access token was: %s' % user_token.access_token_string)
+
+    # Send an XMPP invitation
+    logging.info('Sending invite to %s' % user_token.email_address)
+    xmpp.send_invite(user_token.email_address)
+    msg = 'Welcome to the BuzzChatBot: %s' % settings.APP_URL
+    xmpp.send_message(user_token.email_address, msg)
 
     self.redirect(settings.PROFILE_HANDLER_URL)

@@ -65,7 +65,7 @@ class TrackerTest(unittest.TestCase):
     sender = 'foo@example.com'
     search_term='somestring'
     tracker = Tracker(hub_subscriber=StubHubSubscriber())
-    expected_callback_url = 'http://%s.appspot.com/posts/%s/%s' % (settings.APP_NAME, sender, search_term)
+    expected_callback_url = '%s/posts/%s/%s' % (settings.APP_URL, sender, search_term)
     expected_subscription = Subscription(url='https://www.googleapis.com/buzz/v1/activities/track?q=%s' % search_term, search_term=search_term, callback_url=expected_callback_url)
 
     actual_subscription = tracker.track(sender, search_term)
@@ -112,7 +112,7 @@ class TrackerTest(unittest.TestCase):
     tracker = Tracker(hub_subscriber=hub_subscriber)
 
     subscription = tracker.track(sender, search_term)
-    expected_callback_url = 'http://%s.appspot.com/posts?id=%s' % (settings.APP_NAME, subscription.id())
+    expected_callback_url = '%s/posts?id=%s' % (settings.APP_URL, subscription.id())
     self.assertEquals(expected_callback_url, hub_subscriber.callback_url)
 
   def test_tracker_subscribes_with_urlencoded_callback_url(self):
@@ -123,7 +123,7 @@ class TrackerTest(unittest.TestCase):
     tracker = Tracker(hub_subscriber=hub_subscriber)
 
     subscription = tracker.track(sender, search_term)
-    expected_callback_url = 'http://%s.appspot.com/posts?id=%s' % (settings.APP_NAME, subscription.id())
+    expected_callback_url = '%s/posts?id=%s' % (settings.APP_URL, subscription.id())
     self.assertEquals(expected_callback_url, hub_subscriber.callback_url)
 
   def test_tracker_subscribes_with_callback_url_that_identifies_subscriber_and_query_without_xmpp_client_identifier(self):
@@ -134,7 +134,7 @@ class TrackerTest(unittest.TestCase):
     tracker = Tracker(hub_subscriber=hub_subscriber)
 
     subscription = tracker.track(sender, search_term)
-    expected_callback_url = 'http://%s.appspot.com/posts?id=%s' % (settings.APP_NAME, subscription.id())
+    expected_callback_url = '%s/posts?id=%s' % (settings.APP_URL, subscription.id())
     self.assertEquals(expected_callback_url, hub_subscriber.callback_url)
 
   def test_tracker_rejects_invalid_id_for_untracking(self):
@@ -159,4 +159,4 @@ class TrackerTest(unittest.TestCase):
 
     self.assertEquals(track_subscription, untrack_subscription)
     self.assertFalse(Subscription.exists(track_subscription.id()))
-    self.assertEquals('http://%s.appspot.com/posts?id=%s' % (settings.APP_NAME, track_subscription.id()), hub_subscriber.callback_url)
+    self.assertEquals('%s/posts?id=%s' % (settings.APP_URL, track_subscription.id()), hub_subscriber.callback_url)

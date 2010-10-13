@@ -86,7 +86,7 @@ class Tracker(object):
     return subscription
 
   def _build_callback_url(self, subscription):
-    return "http://%s.appspot.com/posts?id=%s" % (settings.APP_NAME, subscription.id())
+    return "%s/posts?id=%s" % (settings.APP_URL, subscription.id())
 
   def _build_subscription_url(self, search_term):
     search_term = urllib.quote(search_term)
@@ -245,7 +245,7 @@ class XmppHandler(webapp.RequestHandler):
   def unhandled_command(self, message):
     """ User entered a command that is not recognised. Tell them this and show help""" 
     self.help_command(message, XmppHandler.UNKNOWN_COMMAND_MSG % message.command )
-    
+
   def message_received(self, message):
     """ Take the message we've received and dispatch it to the appropriate command handler
     using introspection. E.g. if the command is 'track' it will map to track_command. 
@@ -259,7 +259,7 @@ class XmppHandler(webapp.RequestHandler):
         handler(message)
         return
     self.unhandled_command(message)
-      
+
   def post(self):
     """ Redefines post to create a message from our new SlashlessCommandMessage. 
     TODO(julian) xmpp_handlers: redefine the BaseHandler to have a function createMessage which can be 
@@ -346,7 +346,7 @@ class XmppHandler(webapp.RequestHandler):
   def about_command(self, message):
     logging.info('Received message from: %s' % message.sender)
     message_builder = MessageBuilder()
-    about_message = 'Welcome to %s@appspot.com. A bot for Google Buzz. Find out more at: http://%s.appspot.com' % (settings.APP_NAME, settings.APP_NAME)
+    about_message = 'Welcome to %s@appspot.com. A bot for Google Buzz. Find out more at: %s' % (settings.APP_NAME, settings.APP_URL)
     message_builder.add(about_message)
     reply(message_builder, message)
 
@@ -356,11 +356,11 @@ class XmppHandler(webapp.RequestHandler):
     sender = extract_sender_email_address(message.sender)
     user_token = oauth_handlers.UserToken.find_by_email_address(sender)
     if not user_token:
-      message_builder.add('You (%s) have not given access to your Google Buzz account. Please do so at: http://%s.appspot.com' % (sender, settings.APP_NAME))
+      message_builder.add('You (%s) have not given access to your Google Buzz account. Please do so at: %s' % (sender, settings.APP_URL))
     elif not user_token.access_token_string:
       # User didn't finish the OAuth dance so we make them start again
       user_token.delete()
-      message_builder.add('You (%s) did not complete the process for giving access to your Google Buzz account. Please do so at: http://%s.appspot.com' % (sender, settings.APP_NAME))
+      message_builder.add('You (%s) did not complete the process for giving access to your Google Buzz account. Please do so at: %s' % (sender, settings.APP_URL))
     else:
       message_body = message.body[len(XmppHandler.POST_CMD):]
       url = self.buzz_wrapper.post(sender, message_body)
