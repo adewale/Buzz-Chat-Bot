@@ -33,6 +33,8 @@ class SimpleBuzzWrapper(object):
     user_token = oauth_handlers.UserToken.find_by_email_address(sender)
     api_client = self.builder.build_api_client(user_token.get_access_token())
 
+    # TODO(ade) Implement search functionality
+
   
   def post(self, sender, message_body):
     if message_body is None or message_body.strip() is '':

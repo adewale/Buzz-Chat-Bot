@@ -1,4 +1,3 @@
-
 # These are the settings that tend to differ between installations. Tweak these for your installation.
 # Copyright (C) 2010 Google Inc.
 #
@@ -13,8 +12,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-APP_NAME = 'kiwibuzzer'
-ADMIN_PROFILE_URL = 'http://profiles.google.com/julian.harris'
+APP_NAME = 'favedby'
+ADMIN_PROFILE_URL = 'http://profiles.google.com/adewale'
 
 #PSHB settings
 # This is the token that will act as a shared secret to verify that this application is the one that registered the given subscription. The hub will send us a challenge containing this token.

@@ -39,7 +39,7 @@ class ProfileViewingHandler(webapp.RequestHandler):
 
 class FrontPageHandler(webapp.RequestHandler):
   def get(self):
-    template_values = {'commands' : xmpp.XmppHandler.commands,
+    template_values = {'commands' : xmpp.XmppHandler.COMMAND_HELP_MSG_LIST,
                        'help_command' : xmpp.XmppHandler.HELP_CMD,
                        'jabber_id' : '%s@appspot.com' % settings.APP_NAME,
                        'admin_url' : settings.ADMIN_PROFILE_URL}

@@ -23,6 +23,10 @@ h1 {
     text-shadow: 2px 2px 2px #aaa;
 }
 
+h2 {
+    color: #000000;
+}
+
 h3 {
     /* Reduce the amount of space after section headings */
     margin-bottom: -15px;    

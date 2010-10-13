@@ -11,10 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 from google.appengine.api import xmpp
 from google.appengine.ext import db
-from google.appengine.ext.webapp import xmpp_handlers
 from google.appengine.ext import webapp
 
 
@@ -48,14 +46,26 @@ class Subscription(db.Model):
 
 
 class Tracker(object):
+  def __init__(self, hub_subscriber=pshb.HubSubscriber()):
+    self.hub_subscriber =  hub_subscriber
+
   @staticmethod
   def is_blank(string):
     """ utility function for determining whether a string is blank (just whitespace)
     """
-    return (string == None) or (len(string) == 0) or string.isspace()
+    return (string is None) or (len(string) == 0) or string.isspace()
 
-  def __init__(self, hub_subscriber=pshb.HubSubscriber()):
-    self.hub_subscriber =  hub_subscriber
+  @staticmethod
+  def extract_number(id):
+    """Convert an id to an integer and return None if the conversion fails."""
+    if id is None:
+      return None
+
+    try:
+      id = int(id)
+    except ValueError, e:
+      return None
+    return id
 
   def _valid_subscription(self, search_term):
     return not Tracker.is_blank(search_term)
@@ -88,27 +98,13 @@ class Tracker(object):
     else:
       return None
 
-  @staticmethod
-  def extract_number(id):
-    """ some jiggery pokery to get the number. TODO there must be libraries for this kind of thing"""
-    if id == None:
-      return None
-    
-    if type(id) == type(int()):
-      return id
-    try:
-      id = int(id)
-    except ValueError, e:
-      return None
-    return id
-
   def untrack(self, message_sender, id):
     """ Given an id, untrack takes it and attempts to unsubscribe from the list of tracked items.
     TODO(julian): you should be able to untrack <term> directly.  """
     logging.info("Tracker.untrack: id is: '%s'" % id)
     id_as_int = Tracker.extract_number(id)
     if id_as_int == None:
-      # todo do a subscription lookup by name here
+      # TODO(ade) Do a subscription lookup by name here
       return None
 
     subscription = Subscription.get_by_id(id_as_int)
@@ -151,7 +147,6 @@ class SlashlessCommandMessage(xmpp.Message):
   from how Message works (that expects a single space character) 
   """
   def __init__(self, vars):
-    #super(xmpp.Message, self).__init__(vars) -- silently fails. #pythonwtf
     xmpp.Message.__init__(self, vars)
     
     #TODO(julian) make arg and command protected. because __arg and __command are hidden as private
@@ -184,7 +179,7 @@ class SlashlessCommandMessage(xmpp.Message):
       if results != None:
         command = results.group(1)
         
-    return [command,arg]
+    return (command,arg)
   
   
   def __ensure_command_and_args_extracted(self):
@@ -194,9 +189,9 @@ class SlashlessCommandMessage(xmpp.Message):
     # cache the values. 
     if self.__scm_command == None:
       self.__scm_command,self.__scm_arg = SlashlessCommandMessage.extract_command_and_arg_from_string(self.body)
-      print "command = '%s', arg = '%s'" %(self.__scm_command,self.__scm_arg)
+      logging.info("command = '%s', arg = '%s'" %(self.__scm_command,self.__scm_arg))
     
-  # these properties are redefined from that defined in xmpp.Message
+  # These properties are redefined from that defined in xmpp.Message
   @property 
   def command(self):
     self.__ensure_command_and_args_extracted() 
@@ -212,7 +207,7 @@ class SlashlessCommandMessage(xmpp.Message):
     """ TODO(julian) rename: this is actually response_message """ 
     return self.__message_to_send
   
-  def reply(self, message_to_send, raw_xml):
+  def reply(self, message_to_send, raw_xml=False):
     logging.debug( "SlashlessCommandMessage.reply: message_to_send = %s" % message_to_send)
     xmpp.Message.reply(self, message_to_send, raw_xml=raw_xml)
     self.__message_to_send = message_to_send
@@ -228,9 +223,7 @@ class XmppHandler(webapp.RequestHandler):
   
   PERMITTED_COMMANDS = [ABOUT_CMD,HELP_CMD,LIST_CMD,POST_CMD,TRACK_CMD,UNTRACK_CMD]
 
-  #this should be called COMMAND_HELP_MSG_LIST but App Engine requires this specific name!
-  # make this dependency explicit. 
-  commands = [
+  COMMAND_HELP_MSG_LIST = [
     '%s Prints out this message' % HELP_CMD,
     '%s [search term] Starts tracking the given search term and returns the id for your subscription' % TRACK_CMD,
     '%s [id] Removes your subscription for that id' % UNTRACK_CMD,
@@ -245,8 +238,9 @@ class XmppHandler(webapp.RequestHandler):
   SUBSCRIPTION_SUCCESS_MSG        = 'Tracking: %s with id: %s'
   LIST_NOT_TRACKING_ANYTHING_MSG  = 'You are not tracking anything. To track when a word or phrase appears in Buzz, enter: track <thing of interest>'
 
-  def __init__(self, buzz_wrapper=simple_buzz_wrapper.SimpleBuzzWrapper()):
+  def __init__(self, buzz_wrapper=simple_buzz_wrapper.SimpleBuzzWrapper(), hub_subscriber=pshb.HubSubscriber()):
     self.buzz_wrapper = buzz_wrapper
+    self.tracker = Tracker(hub_subscriber=hub_subscriber)
     
   def unhandled_command(self, message):
     """ User entered a command that is not recognised. Tell them this and show help""" 
@@ -263,17 +257,13 @@ class XmppHandler(webapp.RequestHandler):
       handler = getattr(self, handler_name, None)
       if handler:
         handler(message)
-      else:
-        self.unhandled_command(message)
-    else:
-      self.unhandled_command(message)
-      
+        return
+    self.unhandled_command(message)
       
   def post(self):
     """ Redefines post to create a message from our new SlashlessCommandMessage. 
     TODO(julian) xmpp_handlers: redefine the BaseHandler to have a function createMessage which can be 
     overridden this will avoid the code duplicated below
-    TODO(julian) this has no test coverage
     """
     logging.info("Received chat msg, raw post =  '%s'" % self.request.POST)
     try:
@@ -282,6 +272,7 @@ class XmppHandler(webapp.RequestHandler):
       # END CHANGE
     except xmpp.InvalidMessageError, e:
       logging.error("Invalid XMPP request: Missing required field %s", e[0])
+      self.error(400)
       return
     self.message_received(self.xmpp_message)
 
@@ -289,16 +280,17 @@ class XmppHandler(webapp.RequestHandler):
     logging.error( "handle_exception: calling webapp.RequestHandler superclass")
     webapp.RequestHandler.handle_exception(self, exception, debug_mode)
     if self.xmpp_message:
-      self.xmpp_message.reply("Oops. Something went wrong. Beta software etc." )
+      self.xmpp_message.reply("Oops. Something went wrong. Sorry about that")
       logging.error('User visible oops for message: %s' % str(self.xmpp_message.body))
 
   def help_command(self, message=None, prompt='We all need a little help sometimes' ):
-    """ print out the help command. Optionally accepts a message builder
+    """ Print out the help command.
+    Optionally accepts a message builder
     so help can be printed out if the user looks like they're having trouble """
     logging.info('Received message from: %s' % message.sender)
 
     lines = [prompt]
-    lines.extend(self.commands)
+    lines.extend(self.COMMAND_HELP_MSG_LIST)
     message_builder = MessageBuilder()
 
     for line in lines:
@@ -306,7 +298,8 @@ class XmppHandler(webapp.RequestHandler):
     reply(message_builder, message)
 
   def track_command(self, message=None):
-    """ start tracking a phrase against the Buzz API. message must be a valid
+    """ Start tracking a phrase against the Buzz API.
+    message must be a valid
     xmpp.Message or subclass and cannot be null. """
     logging.debug('Received message from: %s' % message.sender)
     subscription = None
@@ -315,9 +308,8 @@ class XmppHandler(webapp.RequestHandler):
     if message.arg == '':      
       message_builder.add( XmppHandler.NOTHING_TO_TRACK_MSG )
     else:
-      tracker = Tracker()
       logging.debug( "track_command: calling tracker.track with term '%s'" % message.arg )
-      subscription = tracker.track(message.sender, message.arg)
+      subscription = self.tracker.track(message.sender, message.arg)
       if subscription:
         message_builder.add( XmppHandler.SUBSCRIPTION_SUCCESS_MSG % (subscription.search_term, subscription.id()))
       else:
@@ -330,8 +322,7 @@ class XmppHandler(webapp.RequestHandler):
   def untrack_command(self, message=None):
     logging.info('Received message from: %s' % message.sender)
 
-    tracker = Tracker()
-    subscription = tracker.untrack(message.sender, message.arg)
+    subscription = self.tracker.untrack(message.sender, message.arg)
     message_builder = MessageBuilder()
     if subscription:
       message_builder.add('No longer tracking: %s with id: %s' % (subscription.search_term, subscription.id()))
