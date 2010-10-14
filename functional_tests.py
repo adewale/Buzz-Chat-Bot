@@ -102,6 +102,15 @@ class XmppHandlerTest(BuzzChatBotFunctionalTestCase):
 
     self.assertEqual(message.message_to_send, XmppHandler.SUBSCRIPTION_SUCCESS_MSG % (message.arg,subscription.id()))
     
+  def test_invalid_symbol_command_shows_correct_error(self):
+    command = '?'
+    message = StubMessage(body=command)
+    handler = XmppHandler()
+
+    handler.message_received(message)
+
+    self.assertTrue(XmppHandler.UNKNOWN_COMMAND_MSG % command in message.message_to_send, message.message_to_send)
+
   def test_unhandled_command_shows_correct_error(self):
     command = 'wibble'
     message = StubMessage(body=command)

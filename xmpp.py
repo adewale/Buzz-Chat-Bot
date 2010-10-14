@@ -168,17 +168,17 @@ class SlashlessCommandMessage(xmpp.Message):
     arg = None
      
     results = re.search(r"\s*(\S*\b)\s*(.*)", string) 
-    if results != None:
+    if results:
       command = results.group(1)
       arg = results.group(2)
     
     # we didn't find a command and an arg so maybe we'll just find the command
     # some commands may not have args 
     else:
-      results = re.search(r"\s*(\S*\b)\s*", string)
-      if results != None:
+      results = re.search(r"\s*(\S*)\s*", string)
+      if results:
         command = results.group(1)
-        
+    logging.debug('Groups matched: %s' % str(results))
     return (command,arg)
   
   
@@ -187,7 +187,7 @@ class SlashlessCommandMessage(xmpp.Message):
     In the case of a SlashlessCommandMessage, there is always one -- the first word is the command.      
     """    
     # cache the values. 
-    if self.__scm_command == None:
+    if not self.__scm_command:
       self.__scm_command,self.__scm_arg = SlashlessCommandMessage.extract_command_and_arg_from_string(self.body)
       logging.info("command = '%s', arg = '%s'" %(self.__scm_command,self.__scm_arg))
     

@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-APP_NAME = 'favedby'
+APP_NAME = 'buzzchatbot'
 
 #Note that the APP_URL must _not_ end in a slash as it will be concatenated with other values
 APP_URL = 'http://%s.appspot.com' % APP_NAME
