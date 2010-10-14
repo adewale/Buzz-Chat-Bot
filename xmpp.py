@@ -167,7 +167,7 @@ class SlashlessCommandMessage(xmpp.Message):
     command = None
     arg = None
      
-    results = re.search(r"\s*(\S*\b)\s*(.*)", string) 
+    results = re.search(r"\s*(\S*)\s*(.*)", string) 
     if results:
       command = results.group(1)
       arg = results.group(2)

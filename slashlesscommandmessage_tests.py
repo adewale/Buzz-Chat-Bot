@@ -22,3 +22,15 @@ class SlashlessCommandMessageTest(unittest.TestCase):
   def test_extracts_all_commands(self):
     for command in XmppHandler.PERMITTED_COMMANDS:
       self.assertEquals(command, SlashlessCommandMessage.extract_command_and_arg_from_string(command)[0])
+
+  def test_extracts_all_commands_prefixed_with_space(self):
+    for command in XmppHandler.PERMITTED_COMMANDS:
+      self.assertEquals(command, SlashlessCommandMessage.extract_command_and_arg_from_string(' ' + command)[0])
+
+  def test_extracts_all_commands_suffixed_with_space(self):
+    for command in XmppHandler.PERMITTED_COMMANDS:
+      self.assertEquals(command, SlashlessCommandMessage.extract_command_and_arg_from_string(command + ' ')[0])
+
+  def test_extracts_all_commands_surrounded_with_space(self):
+    for command in XmppHandler.PERMITTED_COMMANDS:
+      self.assertEquals(command, SlashlessCommandMessage.extract_command_and_arg_from_string(' ' + command + ' ')[0])
