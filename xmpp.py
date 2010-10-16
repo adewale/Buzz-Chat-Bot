@@ -216,15 +216,17 @@ class SlashlessCommandMessage(xmpp.Message):
 class XmppHandler(webapp.RequestHandler):
   ABOUT_CMD   = 'about'
   HELP_CMD    = 'help'
+  ALTERNATIVE_HELP_CMD    = '?'
   LIST_CMD    = 'list'
   POST_CMD    = 'post'
   TRACK_CMD   = 'track'
   UNTRACK_CMD = 'untrack'
   
-  PERMITTED_COMMANDS = [ABOUT_CMD,HELP_CMD,LIST_CMD,POST_CMD,TRACK_CMD,UNTRACK_CMD]
+  PERMITTED_COMMANDS = [ABOUT_CMD,HELP_CMD,ALTERNATIVE_HELP_CMD,LIST_CMD,POST_CMD,TRACK_CMD,UNTRACK_CMD]
 
   COMMAND_HELP_MSG_LIST = [
     '%s Prints out this message' % HELP_CMD,
+    '%s Prints out this message' % ALTERNATIVE_HELP_CMD,
     '%s [search term] Starts tracking the given search term and returns the id for your subscription' % TRACK_CMD,
     '%s [id] Removes your subscription for that id' % UNTRACK_CMD,
     '%s Lists all search terms and ids currently being tracked by you' % LIST_CMD,
@@ -248,17 +250,35 @@ class XmppHandler(webapp.RequestHandler):
 
   def message_received(self, message):
     """ Take the message we've received and dispatch it to the appropriate command handler
-    using introspection. E.g. if the command is 'track' it will map to track_command. 
+    using introspection. E.g. if the command is 'track' it will map to track_command.
     Args:
       message: Message: The message that was sent by the user.
     """
-    if message.command and message.command in XmppHandler.PERMITTED_COMMANDS:
-      handler_name = '%s_command' % (message.command,)
+    logging.info('Command was: %s' % message.command)
+    command = self._get_canonical_command(message)
+
+    if command and command in XmppHandler.PERMITTED_COMMANDS:
+      handler_name = '%s_command' % command
       handler = getattr(self, handler_name, None)
       if handler:
         handler(message)
         return
+      else:
+        logging.info('No handler available for command: %s' % command)
     self.unhandled_command(message)
+
+  def _get_canonical_command(self, message):
+    # The old-style / prefixed commands are honoured as if they were slashless commands. This provides backwards
+    # compatibility for early adopters and people who are used to IRC syntax.
+    command = message.command
+    if command.startswith('/'):
+      command = command[1:]
+
+    # Handle aliases for commands
+    if command == XmppHandler.ALTERNATIVE_HELP_CMD:
+      command = XmppHandler.HELP_CMD
+    return command
+
 
   def post(self):
     """ Redefines post to create a message from our new SlashlessCommandMessage. 
