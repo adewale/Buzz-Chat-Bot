@@ -382,8 +382,7 @@ class XmppHandler(webapp.RequestHandler):
       user_token.delete()
       message_builder.add('You (%s) did not complete the process for giving access to your Google Buzz account. Please do so at: %s' % (sender, settings.APP_URL))
     else:
-      message_body = message.body[len(XmppHandler.POST_CMD):]
-      url = self.buzz_wrapper.post(sender, message_body)
+      url = self.buzz_wrapper.post(sender, message.arg)
       message_builder.add('Posted: %s' % url)
     reply(message_builder, message)
 

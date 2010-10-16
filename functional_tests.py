@@ -27,7 +27,7 @@ class StubMessage(object):
   def __init__(self, sender='foo@example.com', body=''):
     self.sender = sender
     self.body = body
-    self.command,self.arg = SlashlessCommandMessage.extract_command_and_arg_from_string(body)
+    self.command, self.arg = SlashlessCommandMessage.extract_command_and_arg_from_string(body)
     self.message_to_send = None
 
   def reply(self, message_to_send, raw_xml=False):
@@ -292,7 +292,21 @@ class XmppHandlerTest(BuzzChatBotFunctionalTestCase):
 
     handler.message_received(message=message)
 
-    expected_item = '     some message'
+    expected_item = 'some message'
+    self.assertEquals(expected_item, stub.message)
+    
+  def test_slash_post_command_strips_command_from_posted_message(self):
+    stub = StubSimpleBuzzWrapper()
+    handler = XmppHandler(buzz_wrapper=stub)
+    sender = '1@example.com'
+    user_token = oauth_handlers.UserToken(email_address=sender)
+    user_token.access_token_string = 'some thing that looks like an access token from a distance'
+    user_token.put()
+    message = StubMessage(sender=sender, body='/%s some message' % XmppHandler.POST_CMD)
+
+    handler.message_received(message=message)
+
+    expected_item = 'some message'
     self.assertEquals(expected_item, stub.message)
 
   def test_slash_post_gets_treated_as_post_command(self):
