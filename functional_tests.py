@@ -160,7 +160,8 @@ class XmppHandlerTest(BuzzChatBotFunctionalTestCase):
     subscription = self._setup_subscription()
     id = subscription.id()
     message = StubMessage(body='%s %s' % (XmppHandler.UNTRACK_CMD, id))
-    handler = XmppHandler()
+    hub_subscriber = StubHubSubscriber()
+    handler = XmppHandler(hub_subscriber=hub_subscriber)
 
     handler.message_received(message=message)
 
