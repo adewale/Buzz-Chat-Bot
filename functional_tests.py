@@ -16,30 +16,12 @@ import main
 import unittest
 
 from gaetestbed import FunctionalTestCase
+from stubs import StubMessage, StubSimpleBuzzWrapper
 from tracker_tests import StubHubSubscriber
-from xmpp import Tracker, XmppHandler, SlashlessCommandMessage
+from xmpp import Tracker, XmppHandler
 
 import oauth_handlers
 import settings
-import simple_buzz_wrapper
-
-class StubMessage(object):
-  def __init__(self, sender='foo@example.com', body=''):
-    self.sender = sender
-    self.body = body
-    self.command, self.arg = SlashlessCommandMessage.extract_command_and_arg_from_string(body)
-    self.message_to_send = None
-
-  def reply(self, message_to_send, raw_xml=False):
-    self.message_to_send = message_to_send
-
-class StubSimpleBuzzWrapper(simple_buzz_wrapper.SimpleBuzzWrapper):
-  def __init__(self):
-    self.url = 'some fake url'
-
-  def post(self, sender, message_body):
-    self.message = message_body
-    return self.url
   
 class FrontPageHandlerFunctionalTest(FunctionalTestCase, unittest.TestCase):
   APPLICATION = main.application

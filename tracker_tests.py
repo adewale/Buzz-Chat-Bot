@@ -11,17 +11,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import unittest
-from xmpp import Subscription, Tracker, XmppHandler
-import pshb
+from stubs import StubHubSubscriber
+from xmpp import Subscription, Tracker
 import settings
+import unittest
 
-class StubHubSubscriber(pshb.HubSubscriber):
-  def subscribe(self, url, hub, callback_url):
-    self.callback_url = callback_url
-
-  def unsubscribe(self, url, hub, callback_url):
-    self.callback_url = callback_url
 
 class TrackerTest(unittest.TestCase):
   def test_is_blank_works_on_blank_strings(self):
