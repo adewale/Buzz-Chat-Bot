@@ -286,6 +286,30 @@ class XmppHandlerTest(BuzzChatBotFunctionalTestCase):
     expected_item = 'Posted: %s' % self.stub_buzz_wrapper.url
     self.assertEquals(expected_item, message.message_to_send)
 
+  def test_uppercase_post_gets_treated_as_post_command(self):
+    sender = '1@example.com'
+    user_token = oauth_handlers.UserToken(email_address=sender)
+    user_token.access_token_string = 'some thing that looks like an access token from a distance'
+    user_token.put()
+    message = StubMessage(sender=sender, body='%s some message' % XmppHandler.POST_CMD.upper())
+
+    self.handler.message_received(message=message)
+
+    expected_item = 'Posted: %s' % self.stub_buzz_wrapper.url
+    self.assertEquals(expected_item, message.message_to_send)
+
+  def test_slash_uppercase_post_gets_treated_as_post_command(self):
+    sender = '1@example.com'
+    user_token = oauth_handlers.UserToken(email_address=sender)
+    user_token.access_token_string = 'some thing that looks like an access token from a distance'
+    user_token.put()
+    message = StubMessage(sender=sender, body='/%s some message' % XmppHandler.POST_CMD.upper())
+
+    self.handler.message_received(message=message)
+
+    expected_item = 'Posted: %s' % self.stub_buzz_wrapper.url
+    self.assertEquals(expected_item, message.message_to_send)
+
   def test_help_command_lists_available_commands(self):
     sender = '1@example.com'
     message = StubMessage(sender=sender, body='%s' % XmppHandler.HELP_CMD)
