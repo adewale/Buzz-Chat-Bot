@@ -267,7 +267,6 @@ class XmppHandler(webapp.RequestHandler):
     self.unhandled_command(message)
 
   def _get_canonical_command(self, message):
-    # TODO(ade) commands should be case insensitive
     command = message.command.lower()
     
     # The old-style / prefixed commands are honoured as if they were slashless commands. This provides backwards
