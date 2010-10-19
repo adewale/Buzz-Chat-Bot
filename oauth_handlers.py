@@ -81,7 +81,10 @@ class UserToken(db.Model):
 class DanceStartingHandler(webapp.RequestHandler):
   @login_required
   def get(self):
-    logging.info("Request body %s" % self.request.body)
+    logging.info('Request body %s' % self.request.body)
+    user = users.get_current_user()
+    logging.debug('Started OAuth dance for: %s' % user.email())
+
     template_values = {"jabber_id": ("%s@appspot.com" % settings.APP_NAME)}
     if UserToken.access_token_exists():
       template_values['access_token_exists'] = 'true'
@@ -112,8 +115,10 @@ class TokenDeletionHandler(webapp.RequestHandler):
 class DanceFinishingHandler(webapp.RequestHandler):
   def get(self):
     logging.info("Request body %s" % self.request.body)
-    oauth_verifier = self.request.get('oauth_verifier')
+    user = users.get_current_user()
+    logging.debug('Finished OAuth dance for: %s' % user.email())
 
+    oauth_verifier = self.request.get('oauth_verifier')
     client = buzz_gae_client.BuzzGaeClient(settings.CONSUMER_KEY, settings.CONSUMER_SECRET)
     user_token = UserToken.get_current_user_token()
     request_token = user_token.get_request_token()
