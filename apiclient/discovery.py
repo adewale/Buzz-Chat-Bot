@@ -33,24 +33,26 @@ try:
 except ImportError:
     from cgi import parse_qsl
 from apiclient.http import HttpRequest
+from apiclient.json import simplejson
 
-try: # pragma: no cover
-  import simplejson
-except ImportError: # pragma: no cover
-  try:
-    # Try to import from django, should work on App Engine
-    from django.utils import simplejson
-  except ImportError:
-    # Should work for Python2.6 and higher.
-    import json as simplejson
-
-
-class HttpError(Exception):
+class Error(Exception):
+  """Base error for this module."""
   pass
 
 
-class UnknownLinkType(Exception):
+class HttpError(Error):
+  """HTTP data was invalid or unexpected."""
+  def __init__(self, resp, detail):
+    self.resp = resp
+    self.detail = detail
+  def __str__(self):
+    return self.detail
+
+
+class UnknownLinkType(Error):
+  """Link type unknown or unexpected."""
   pass
+
 
 DISCOVERY_URI = ('http://www.googleapis.com/discovery/0.1/describe'
   '{?api,apiVersion}')
@@ -86,12 +88,15 @@ class JsonModel(object):
     if body_value is None:
       return (headers, path_params, query, None)
     else:
-      model = {'data': body_value}
+      if len(body_value) == 1 and 'data' in body_value:
+        model = body_value
+      else:
+        model = {'data': body_value}
       headers['content-type'] = 'application/json'
       return (headers, path_params, query, simplejson.dumps(model))
 
   def build_query(self, params):
-    params.update({'alt': 'json', 'prettyprint': 'true'})
+    params.update({'alt': 'json'})
     astuples = []
     for key, value in params.iteritems():
       if getattr(value, 'encode', False) and callable(value.encode):
@@ -103,13 +108,16 @@ class JsonModel(object):
     # Error handling is TBD, for example, do we retry
     # for some operation/error combinations?
     if resp.status < 300:
+      if resp.status == 204:
+        # A 204: No Content response should be treated differently to all the other success states
+        return simplejson.loads('{}')
       return simplejson.loads(content)['data']
     else:
       logging.debug('Content from bad request was: %s' % content)
-      if resp.get('content-type', '') != 'application/json':
-        raise HttpError('%d %s' % (resp.status, resp.reason))
+      if resp.get('content-type', '').startswith('application/json'):
+        raise HttpError(resp, simplejson.loads(content)['error'])
       else:
-        raise HttpError(simplejson.loads(content)['error'])
+        raise HttpError(resp, '%d %s' % (resp.status, resp.reason))
 
 
 def build(serviceName, version, http=None,
@@ -152,7 +160,7 @@ def build(serviceName, version, http=None,
 
   def createMethod(theclass, methodName, methodDesc, futureDesc):
 
-    def method(self, **kwargs):
+    def method(self):
       return createResource(self._http, self._baseUrl, self._model,
           methodName, self._developerKey, methodDesc, futureDesc)
 

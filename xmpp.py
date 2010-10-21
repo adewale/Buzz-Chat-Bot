@@ -377,10 +377,14 @@ class XmppHandler(webapp.RequestHandler):
     user_token = oauth_handlers.UserToken.find_by_email_address(sender)
     if not user_token:
       message_builder.add('You (%s) have not given access to your Google Buzz account. Please do so at: %s' % (sender, settings.APP_URL))
+      logging.debug('%s has not given access to their Google Buzz account but is attempting to post anyway' % sender)
     elif not user_token.access_token_string:
+      logging.debug('%s did not complete the process for giving access to their Google Buzz account. Deleting their incomplete token: %s' % (sender, str(user_token)))
+
       # User didn't finish the OAuth dance so we make them start again
       user_token.delete()
       message_builder.add('You (%s) did not complete the process for giving access to your Google Buzz account. Please do so at: %s' % (sender, settings.APP_URL))
+      logging.debug('%s did not complete the process for giving access to their Google Buzz account. Deleting their incomplete token.' % sender)
     else:
       url = self.buzz_wrapper.post(sender, message.arg)
       message_builder.add('Posted: %s' % url)
