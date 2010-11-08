@@ -331,6 +331,14 @@ class XmppHandlerTest(BuzzChatBotFunctionalTestCase):
     for command in XmppHandler.COMMAND_HELP_MSG_LIST:
       self.assertTrue(command in message.message_to_send, message.message_to_send)
 
+  def IGNORE__test_search_command_succeeds_for_single_token(self):
+    arg = 'onewordsearchterm'
+    message = StubMessage( body='%s  %s  ' % (XmppHandler.SEARCH_CMD,arg))
+
+    # We call the method directly here because we actually care about the object that is returned
+    results_string = self.handler.search_command(message=message)
+    self.assertTrue(XmppHandler.SEARCH_RESULTS_PREFIX in message.message_to_send)
+
 class XmppHandlerHttpTest(FunctionalTestCase, unittest.TestCase):
   APPLICATION = main.application
   def test_help_command_can_be_triggered_via_http(self):
@@ -348,6 +356,16 @@ class XmppHandlerHttpTest(FunctionalTestCase, unittest.TestCase):
     data = {'from' : settings.APP_NAME + '@appspot.com',
             'to' : settings.APP_NAME + '@appspot.com',
             'body' : 'list'}
+
+    response = self.post('/_ah/xmpp/message/chat/', data=data)
+
+    self.assertOK(response)
+
+  def test_search_command_can_be_triggered_via_http(self):
+    # List command was chosen as it has no side-effects
+    data = {'from' : settings.APP_NAME + '@appspot.com',
+            'to' : settings.APP_NAME + '@appspot.com',
+            'body' : 'search somesearchterm'}
 
     response = self.post('/_ah/xmpp/message/chat/', data=data)
 

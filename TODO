@@ -13,3 +13,13 @@ File a bug for search by actor.id
 Allow untrack to accept a search term as well as an id
 Allow for a stopword list -- useful for popular terms
 Implement a 'pause' command which stops sending you messages until you issue a 'resume' command
+
+Add the following commands
+follow @user@gmail.com
+unfollow @user@gmail.com
+follow profiles.google.com/userid
+unfollow profiles.google.com/userid
+get @user@gmail.com
+get profiles.google.com/userid
+search searchterm
+search "phrase containing more than one search term"

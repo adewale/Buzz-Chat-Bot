@@ -50,11 +50,13 @@ class SimpleBuzzWrapper(object):
     activities = api_client.activities()
     logging.info('Retrieved activities for: %s' % user_id)
     activity = activities.insert(userId=user_id, body={
-      'title': message_body,
-      'object': {
-        'content': message_body,
-        'type': 'note'}
-      }
+      'data' : {
+        'title': message_body,
+        'object': {
+          'content': message_body,
+          'type': 'note'}
+       }
+    }
                                  ).execute()
     url = activity['links']['alternate'][0]['href']
     logging.info('Just created: %s' % url)

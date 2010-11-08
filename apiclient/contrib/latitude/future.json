@@ -1,7 +1,4 @@
 {
-  "data": {
-    "latitude": {
-      "v1": {
         "baseUrl": "https://www.googleapis.com/",
         "auth": {
           "request": {
@@ -39,6 +36,14 @@
               "scope": {
                 "parameterType": "query",
                 "required": true
+              },
+              "location": {
+                "parameterType": "query",
+                "required": false
+              },
+              "granularity": {
+                "parameterType": "query",
+                "required": false
               }
             }
           },
@@ -73,7 +78,4 @@
             }
           }
         }
-      }
-    }
-  }
 }
