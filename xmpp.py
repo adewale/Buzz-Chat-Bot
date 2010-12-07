@@ -220,8 +220,9 @@ class XmppHandler(webapp.RequestHandler):
   POST_CMD    = 'post'
   TRACK_CMD   = 'track'
   UNTRACK_CMD = 'untrack'
+  SEARCH_CMD  = 'search'
   
-  PERMITTED_COMMANDS = [ABOUT_CMD,HELP_CMD,ALTERNATIVE_HELP_CMD,LIST_CMD,POST_CMD,TRACK_CMD,UNTRACK_CMD]
+  PERMITTED_COMMANDS = [ABOUT_CMD,HELP_CMD,ALTERNATIVE_HELP_CMD,LIST_CMD,POST_CMD,TRACK_CMD,UNTRACK_CMD, SEARCH_CMD]
 
   COMMAND_HELP_MSG_LIST = [
     '%s Prints out this message' % HELP_CMD,
@@ -230,7 +231,8 @@ class XmppHandler(webapp.RequestHandler):
     '%s [id] Removes your subscription for that id' % UNTRACK_CMD,
     '%s Lists all search terms and ids currently being tracked by you' % LIST_CMD,
     '%s Tells you which instance of the Buzz Chat Bot you are using' % ABOUT_CMD,
-    '%s [some message] Posts that message to Buzz' % POST_CMD
+    '%s [some message] Posts that message to Buzz' % POST_CMD,
+    '%s [some search term] Searches for that search term on Buzz'
   ]
   
   TRACK_FAILED_MSG                = 'Sorry there was a problem with that track command '
@@ -278,7 +280,6 @@ class XmppHandler(webapp.RequestHandler):
     if command == XmppHandler.ALTERNATIVE_HELP_CMD:
       command = XmppHandler.HELP_CMD
     return command
-
 
   def post(self):
     """ Redefines post to create a message from our new SlashlessCommandMessage. 
@@ -354,6 +355,7 @@ class XmppHandler(webapp.RequestHandler):
     logging.info('Received message from: %s' % message.sender)
     message_builder = MessageBuilder()
     sender = extract_sender_email_address(message.sender)
+    
     logging.info('Sender: %s' % sender)
     subscriptions_query = Subscription.gql('WHERE subscriber = :1', sender)
     if subscriptions_query.count() > 0:
@@ -390,6 +392,20 @@ class XmppHandler(webapp.RequestHandler):
       message_builder.add('Posted: %s' % url)
     reply(message_builder, message)
 
+  def search_command(self, message):
+    logging.info('Received message from: %s' % message.sender)
+    message_builder = MessageBuilder()
+    sender = extract_sender_email_address(message.sender)
+    logging.info('Sender: %s' % sender)
+
+    message_builder.add('Search results for %s:' % message.arg)
+    results = self.buzz_wrapper.search(message.arg)
+    for index, result in enumerate(results):
+      title = result['title']
+      permalink = result['links']['alternate'][0]['href']
+      line = '%s- %s : %s' % (index+1, title, permalink)
+      message_builder.add(line)
+    reply(message_builder, message)
 
 def extract_sender_email_address(message_sender):
     return message_sender.split('/')[0]

@@ -16,6 +16,9 @@ import simple_buzz_wrapper
 import unittest
 
 class SimpleBuzzWrapperTest(unittest.TestCase):
+# None of the tests make a remote call. We assume the underlying libraries
+# and servers are working.
+
   def test_wrapper_rejects_empty_post(self):
     wrapper = simple_buzz_wrapper.SimpleBuzzWrapper()
     self.assertEquals(None, wrapper.post('sender@example.org', ''))
@@ -27,3 +30,15 @@ class SimpleBuzzWrapperTest(unittest.TestCase):
   def test_wrapper_rejects_none_post(self):
     wrapper = simple_buzz_wrapper.SimpleBuzzWrapper()
     self.assertEquals(None, wrapper.post('sender@example.org', None))
+
+  def test_wrapper_rejects_empty_search(self):
+	wrapper = simple_buzz_wrapper.SimpleBuzzWrapper()
+	self.assertEquals(None, wrapper.search(''))
+
+  def test_wrapper_rejects_search_containing_only_whitespace(self):
+	wrapper = simple_buzz_wrapper.SimpleBuzzWrapper()
+	self.assertEquals(None, wrapper.search(' '))
+
+  def test_wrapper_rejects_search_with_none(self):
+	wrapper = simple_buzz_wrapper.SimpleBuzzWrapper()
+	self.assertEquals(None, wrapper.search(None))

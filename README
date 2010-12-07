@@ -53,3 +53,4 @@ This isn't yet ready for installation by people who don't feel like changing the
 -- Change the settings.APP_NAME constant to have the same Application Identifier as your application.
 -- Change the settings.SECRET_TOKEN from the default
 - Use the Google App Engine Launcher: http://code.google.com/appengine/downloads.html#Google_App_Engine_SDK_for_Python to deploy the application.
+

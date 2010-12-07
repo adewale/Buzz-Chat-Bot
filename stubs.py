@@ -40,3 +40,6 @@ class StubSimpleBuzzWrapper(simple_buzz_wrapper.SimpleBuzzWrapper):
   def post(self, sender, message_body):
     self.message = message_body
     return self.url
+
+  def search(self, message):
+	return [{'title':'Title1', 'links':{'alternate':[{'href':'http://www.example.com/1'}]}}, {'title': 'Title2', 'links':{'alternate':[{'href':'http://www.example.com/2'}]}}]
