@@ -74,13 +74,16 @@ class PostsHandlerTest(BuzzChatBotFunctionalTestCase):
     response.mustcontain(challenge)
 
 
+class StubXmppHandler(XmppHandler):
+  def _make_wrapper(self, email_address):
+    return StubSimpleBuzzWrapper()
+
 class XmppHandlerTest(BuzzChatBotFunctionalTestCase):
   def __init__(self, methodName='runTest'):
     BuzzChatBotFunctionalTestCase.__init__(self, methodName)
 
-    self.stub_buzz_wrapper = StubSimpleBuzzWrapper()
     self.stub_hub_subscriber = StubHubSubscriber()
-    self.handler = XmppHandler(buzz_wrapper=self.stub_buzz_wrapper, hub_subscriber=self.stub_hub_subscriber)
+    self.handler = StubXmppHandler(hub_subscriber=self.stub_hub_subscriber)
 
   def test_track_command_succeeds_for_varying_combinations_of_whitespace(self):
     arg = 'Some day my prints will come'
@@ -247,7 +250,7 @@ class XmppHandlerTest(BuzzChatBotFunctionalTestCase):
 
     self.handler.message_received(message=message)
 
-    expected_item = 'Posted: %s' % self.stub_buzz_wrapper.url
+    expected_item = 'Posted: %s' % self.handler.buzz_wrapper.url
     self.assertEquals(expected_item, message.message_to_send)
 
   def test_post_command_strips_command_from_posted_message(self):
@@ -260,7 +263,7 @@ class XmppHandlerTest(BuzzChatBotFunctionalTestCase):
     self.handler.message_received(message=message)
 
     expected_item = 'some message'
-    self.assertEquals(expected_item, self.stub_buzz_wrapper.message)
+    self.assertEquals(expected_item, self.handler.buzz_wrapper.message)
     
   def test_slash_post_command_strips_command_from_posted_message(self):
     sender = '1@example.com'
@@ -272,7 +275,7 @@ class XmppHandlerTest(BuzzChatBotFunctionalTestCase):
     self.handler.message_received(message=message)
 
     expected_item = 'some message'
-    self.assertEquals(expected_item, self.stub_buzz_wrapper.message)
+    self.assertEquals(expected_item, self.handler.buzz_wrapper.message)
 
   def test_slash_post_gets_treated_as_post_command(self):
     sender = '1@example.com'
@@ -283,7 +286,7 @@ class XmppHandlerTest(BuzzChatBotFunctionalTestCase):
 
     self.handler.message_received(message=message)
 
-    expected_item = 'Posted: %s' % self.stub_buzz_wrapper.url
+    expected_item = 'Posted: %s' % self.handler.buzz_wrapper.url
     self.assertEquals(expected_item, message.message_to_send)
 
   def test_uppercase_post_gets_treated_as_post_command(self):
@@ -295,7 +298,7 @@ class XmppHandlerTest(BuzzChatBotFunctionalTestCase):
 
     self.handler.message_received(message=message)
 
-    expected_item = 'Posted: %s' % self.stub_buzz_wrapper.url
+    expected_item = 'Posted: %s' % self.handler.buzz_wrapper.url
     self.assertEquals(expected_item, message.message_to_send)
 
   def test_slash_uppercase_post_gets_treated_as_post_command(self):
@@ -307,7 +310,7 @@ class XmppHandlerTest(BuzzChatBotFunctionalTestCase):
 
     self.handler.message_received(message=message)
 
-    expected_item = 'Posted: %s' % self.stub_buzz_wrapper.url
+    expected_item = 'Posted: %s' % self.handler.buzz_wrapper.url
     self.assertEquals(expected_item, message.message_to_send)
 
   def test_help_command_lists_available_commands(self):
@@ -341,6 +344,7 @@ class XmppHandlerTest(BuzzChatBotFunctionalTestCase):
 
 class XmppHandlerHttpTest(FunctionalTestCase, unittest.TestCase):
   APPLICATION = main.application
+  
   def test_help_command_can_be_triggered_via_http(self):
     # Help command was chosen as it's idempotent and has no side-effects
     data = {'from' : settings.APP_NAME + '@appspot.com',

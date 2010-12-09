@@ -16,7 +16,7 @@ import simple_buzz_wrapper
 import unittest
 
 class SimpleBuzzWrapperTest(unittest.TestCase):
-# None of the tests make a remote call. We assume the underlying libraries
+# None of these tests make a remote call. We assume the underlying libraries
 # and servers are working.
 
   def test_wrapper_rejects_empty_post(self):
@@ -42,3 +42,24 @@ class SimpleBuzzWrapperTest(unittest.TestCase):
   def test_wrapper_rejects_search_with_none(self):
 	wrapper = simple_buzz_wrapper.SimpleBuzzWrapper()
 	self.assertEquals(None, wrapper.search(None))
+
+class SimpleBuzzWrapperRemoteTest(unittest.TestCase):
+# These tests make remote calls
+	def test_searching_returns_results(self):
+		wrapper = simple_buzz_wrapper.SimpleBuzzWrapper()
+		results = wrapper.search('oshineye')
+		self.assertTrue(results is not None)
+	
+	def test_searching_honours_max_results(self):
+		wrapper = simple_buzz_wrapper.SimpleBuzzWrapper()
+		max = 5
+		results = wrapper.search('oshineye', max_results=max)
+		self.assertEquals(max, len(results))
+		
+	def test_can_fetch_profile(self):
+	  wrapper = simple_buzz_wrapper.SimpleBuzzWrapper()
+	  profile = wrapper.get_profile('googlebuzz')
+	  self.assertTrue(profile is not None)
+	  
+	  profile = wrapper.get_profile(user_id = 'adewale')
+	  self.assertTrue(profile is not None)

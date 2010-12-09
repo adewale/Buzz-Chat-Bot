@@ -12,24 +12,30 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import buzz_gae_client
-import settings
-import oauth_handlers
 import logging
 
 class SimpleBuzzWrapper(object):
   "Simple client that exposes the bare minimum set of common Buzz operations"
 
-  def __init__(self, user_token=None):
-    if user_token:
-      self.current_user_token = user_token
-    self.builder = buzz_gae_client.BuzzGaeClient(settings.CONSUMER_KEY, settings.CONSUMER_SECRET)
+  def __init__(self, api_key=None, consumer_key='anonymous', consumer_secret='anonymous',
+    oauth_token=None, oauth_token_secret=None):
+    
+    self.builder = buzz_gae_client.BuzzGaeClient(consumer_key, consumer_secret, api_key=api_key)
+    if oauth_token and oauth_token_secret:
+      oauth_params_dict = {}
+      oauth_params_dict['consumer_key'] = consumer_key
+      oauth_params_dict['consumer_secret'] = consumer_secret
+      oauth_params_dict['oauth_token'] = oauth_token
+      oauth_params_dict['oauth_token_secret'] = oauth_token_secret
+      self.api_client = self.builder.build_api_client(oauth_params=oauth_params_dict)
+    else:
+      self.api_client = self.builder.build_api_client()
 
   def search(self, query, user_token=None, max_results=10):
     if query is None or query.strip() is '':
       return None
-    api_client = self.builder.build_api_client()
 
-    json = api_client.activities().search(q=query, max_results=max_results).execute()
+    json = self.api_client.activities().search(q=query, max_results=max_results).execute()
     if json.has_key('items'):
       return json['items']
     return []
@@ -38,14 +44,11 @@ class SimpleBuzzWrapper(object):
     if message_body is None or message_body.strip() is '':
       return None
 
-    user_token = oauth_handlers.UserToken.find_by_email_address(sender)
-    api_client = self.builder.build_api_client(user_token.get_access_token())
-
     #TODO(ade) What happens with users who have hidden their email address?
-    # Switch to @me so it won't matter
+    # Maybe we should switch to @me so it won't matter?
     user_id = sender.split('@')[0]
 
-    activities = api_client.activities()
+    activities = self.api_client.activities()
     logging.info('Retrieved activities for: %s' % user_id)
     activity = activities.insert(userId=user_id, body={
       'data' : {
@@ -60,8 +63,7 @@ class SimpleBuzzWrapper(object):
     logging.info('Just created: %s' % url)
     return url
 
-  def get_profile(self):
-    api_client = self.builder.build_api_client(self.current_user_token.get_access_token())
-    user_profile_data = api_client.people().get(userId='@me').execute()
+  def get_profile(self, user_id='@me'):
+    user_profile_data = self.api_client.people().get(userId=user_id).execute()
     return user_profile_data
 

@@ -211,7 +211,7 @@ class SlashlessCommandMessage(xmpp.Message):
     xmpp.Message.reply(self, message_to_send, raw_xml=raw_xml)
     self.__message_to_send = message_to_send
 
- 
+
 class XmppHandler(webapp.RequestHandler):
   ABOUT_CMD   = 'about'
   HELP_CMD    = 'help'
@@ -241,14 +241,23 @@ class XmppHandler(webapp.RequestHandler):
   SUBSCRIPTION_SUCCESS_MSG        = 'Tracking: %s with id: %s'
   LIST_NOT_TRACKING_ANYTHING_MSG  = 'You are not tracking anything. To track when a word or phrase appears in Buzz, enter: track <thing of interest>'
 
-  def __init__(self, buzz_wrapper=simple_buzz_wrapper.SimpleBuzzWrapper(), hub_subscriber=pshb.HubSubscriber()):
-    self.buzz_wrapper = buzz_wrapper
+  def __init__(self, hub_subscriber=pshb.HubSubscriber()):
     self.tracker = Tracker(hub_subscriber=hub_subscriber)
     
   def unhandled_command(self, message):
     """ User entered a command that is not recognised. Tell them this and show help""" 
     self.help_command(message, XmppHandler.UNKNOWN_COMMAND_MSG % message.command )
 
+  def _make_wrapper(self, email_address):
+    user_token = oauth_handlers.UserToken.find_by_email_address(email_address)
+    if user_token:
+      oauth_params_dict = user_token.get_access_token()
+      return simple_buzz_wrapper.SimpleBuzzWrapper(api_key=settings.API_KEY, consumer_key=oauth_params_dict['consumer_key'],
+        consumer_secret=oauth_params_dict['consumer_secret'], oauth_token=oauth_params_dict['oauth_token'], 
+        oauth_token_secret=oauth_params_dict['oauth_token_secret'])
+    else:
+      return simple_buzz_wrapper.SimpleBuzzWrapper(api_key=settings.API_KEY)
+       
   def message_received(self, message):
     """ Take the message we've received and dispatch it to the appropriate command handler
     using introspection. E.g. if the command is 'track' it will map to track_command.
@@ -257,6 +266,8 @@ class XmppHandler(webapp.RequestHandler):
     """
     logging.info('Command was: %s' % message.command)
     command = self._get_canonical_command(message)
+    
+    self.buzz_wrapper = self._make_wrapper(message.sender)
 
     if command and command in XmppHandler.PERMITTED_COMMANDS:
       handler_name = '%s_command' % command
