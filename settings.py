@@ -57,8 +57,6 @@ SHOULD_VERIFY_INCOMING_POSTS = False
 CONSUMER_KEY = 'anonymous'
 CONSUMER_SECRET = 'anonymous'
 
-# OAuth callback URL
-CALLBACK_URL = '%s/finish_dance' % APP_URL
 PROFILE_HANDLER_URL = '/profile'
 FRONT_PAGE_HANDLER_URL = '/'
 # Installation specific config ends.

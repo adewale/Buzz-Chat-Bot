@@ -249,14 +249,7 @@ class XmppHandler(webapp.RequestHandler):
     self.help_command(message, XmppHandler.UNKNOWN_COMMAND_MSG % message.command )
 
   def _make_wrapper(self, email_address):
-    user_token = oauth_handlers.UserToken.find_by_email_address(email_address)
-    if user_token:
-      oauth_params_dict = user_token.get_access_token()
-      return simple_buzz_wrapper.SimpleBuzzWrapper(api_key=settings.API_KEY, consumer_key=oauth_params_dict['consumer_key'],
-        consumer_secret=oauth_params_dict['consumer_secret'], oauth_token=oauth_params_dict['oauth_token'], 
-        oauth_token_secret=oauth_params_dict['oauth_token_secret'])
-    else:
-      return simple_buzz_wrapper.SimpleBuzzWrapper(api_key=settings.API_KEY)
+    return oauth_handlers.make_wrapper(email_address)
        
   def message_received(self, message):
     """ Take the message we've received and dispatch it to the appropriate command handler

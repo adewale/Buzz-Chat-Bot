@@ -12,17 +12,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from google.appengine.api import users
+from google.appengine.api import xmpp
 from google.appengine.ext import db
 from google.appengine.ext import webapp
 from google.appengine.ext.webapp import template
 from google.appengine.ext.webapp.util import login_required
-from google.appengine.api import users
-from google.appengine.api import xmpp
 
 import buzz_gae_client
 import logging
 import os
 import settings
+import simple_buzz_wrapper
 
 class UserToken(db.Model):
 # The user_id is the key_name so we don't have to make it an explicit property
@@ -91,7 +92,8 @@ class DanceStartingHandler(webapp.RequestHandler):
     else:
     # Generate the request token
       client = buzz_gae_client.BuzzGaeClient(settings.CONSUMER_KEY, settings.CONSUMER_SECRET)
-      request_token = client.get_request_token(settings.CALLBACK_URL)
+      request_token = client.get_request_token(self.request.host_url + '/finish_dance')
+      logging.info('Request token: %s' % request_token)
 
       # Create the request token and associate it with the current user
       user_token = UserToken.create_user_token(request_token)
@@ -136,3 +138,13 @@ class DanceFinishingHandler(webapp.RequestHandler):
     xmpp.send_message(user_token.email_address, msg)
 
     self.redirect(settings.PROFILE_HANDLER_URL)
+
+def make_wrapper(email_address):
+  user_token = UserToken.find_by_email_address(email_address)
+  if user_token:
+    oauth_params_dict = user_token.get_access_token()
+    return simple_buzz_wrapper.SimpleBuzzWrapper(api_key=settings.API_KEY, consumer_key=oauth_params_dict['consumer_key'],
+      consumer_secret=oauth_params_dict['consumer_secret'], oauth_token=oauth_params_dict['oauth_token'], 
+      oauth_token_secret=oauth_params_dict['oauth_token_secret'])
+  else:
+    return simple_buzz_wrapper.SimpleBuzzWrapper(api_key=settings.API_KEY)

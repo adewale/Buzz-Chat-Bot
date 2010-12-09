@@ -29,7 +29,7 @@ class ProfileViewingHandler(webapp.RequestHandler):
   @login_required
   def get(self):
     user_token = oauth_handlers.UserToken.get_current_user_token()
-    buzz_wrapper = simple_buzz_wrapper.SimpleBuzzWrapper(user_token)
+    buzz_wrapper = oauth_handlers.make_wrapper(user_token.email_address)
     user_profile_data = buzz_wrapper.get_profile()
 
     template_values = {'user_profile_data': user_profile_data, 'access_token': user_token.access_token_string}
