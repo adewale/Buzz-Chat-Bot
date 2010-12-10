@@ -296,16 +296,16 @@ class XmppHandler(webapp.RequestHandler):
       self.xmpp_message = SlashlessCommandMessage(self.request.POST)
       # END CHANGE
     except xmpp.InvalidMessageError, e:
-      logging.error("Invalid XMPP request: Missing required field %s", e[0])
+      logging.error("Invalid XMPP request: Missing required field: %s", e[0])
       self.error(400)
       return
     self.message_received(self.xmpp_message)
 
   def handle_exception(self, exception, debug_mode):
-    logging.error( "handle_exception: calling webapp.RequestHandler superclass")
+    logging.error('handle_exception: calling webapp.RequestHandler superclass')
     webapp.RequestHandler.handle_exception(self, exception, debug_mode)
     if self.xmpp_message:
-      self.xmpp_message.reply("Oops. Something went wrong. Sorry about that")
+      self.xmpp_message.reply('Oops. Something went wrong. Sorry about that')
       logging.error('User visible oops for message: %s' % str(self.xmpp_message.body))
 
   def help_command(self, message=None, prompt='We all need a little help sometimes' ):

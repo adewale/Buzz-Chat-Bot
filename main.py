@@ -83,8 +83,6 @@ class PostsHandler(webapp.RequestHandler):
   def post(self):
     """Create a new resource in this collection"""
     logging.info("Headers were: %s" % str(self.request.headers))
-    logging.info('Request: %s' % str(self.request))
-    logging.debug("New content: %s" % self.request.body)
     id = self.request.get('id')
     logging.debug("Request id = '%s'", id)
 
