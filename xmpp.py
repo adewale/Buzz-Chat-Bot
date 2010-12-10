@@ -17,12 +17,13 @@ from google.appengine.ext import webapp
 
 
 import logging
-import urllib
 import oauth_handlers
+import pprint
 import pshb
+import re
 import settings
 import simple_buzz_wrapper
-import re
+import urllib
 
 class Subscription(db.Model):
   url = db.StringProperty(required=True)
@@ -303,10 +304,15 @@ class XmppHandler(webapp.RequestHandler):
 
   def handle_exception(self, exception, debug_mode):
     logging.error('handle_exception: calling webapp.RequestHandler superclass')
-    webapp.RequestHandler.handle_exception(self, exception, debug_mode)
+    
+    # All code that logs the content of the error uses pformat because in situations
+    # where the message contains non-ASCII characters the use of str() was causing
+    # an exception in the logging library which would hide the original exception
+    
+    logging.error('Exception: %s' % pprint.pformat(exception))
     if self.xmpp_message:
       self.xmpp_message.reply('Oops. Something went wrong. Sorry about that')
-      logging.error('User visible oops for message: %s' % str(self.xmpp_message.body))
+      logging.error('User visible oops for message: %s' % pprint.pformat(self.xmpp_message.body))
 
   def help_command(self, message=None, prompt='We all need a little help sometimes' ):
     """ Print out the help command.
