@@ -22,6 +22,7 @@ class SimpleBuzzWrapper(object):
     
     self.builder = buzz_gae_client.BuzzGaeClient(consumer_key, consumer_secret, api_key=api_key)
     if oauth_token and oauth_token_secret:
+      logging.info('Using api_client with authorisation')
       oauth_params_dict = {}
       oauth_params_dict['consumer_key'] = consumer_key
       oauth_params_dict['consumer_secret'] = consumer_secret
@@ -29,6 +30,7 @@ class SimpleBuzzWrapper(object):
       oauth_params_dict['oauth_token_secret'] = oauth_token_secret
       self.api_client = self.builder.build_api_client(oauth_params=oauth_params_dict)
     else:
+      logging.info('Using api_client that doesn\'t have authorisation')
       self.api_client = self.builder.build_api_client()
 
   def search(self, query, user_token=None, max_results=10):

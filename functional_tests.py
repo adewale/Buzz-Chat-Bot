@@ -18,7 +18,7 @@ import unittest
 from gaetestbed import FunctionalTestCase
 from stubs import StubMessage, StubSimpleBuzzWrapper
 from tracker_tests import StubHubSubscriber
-from xmpp import Tracker, XmppHandler
+from xmpp import Tracker, XmppHandler, extract_sender_email_address
 
 import oauth_handlers
 import settings
@@ -76,6 +76,7 @@ class PostsHandlerTest(BuzzChatBotFunctionalTestCase):
 
 class StubXmppHandler(XmppHandler):
   def _make_wrapper(self, email_address):
+    self.email_address = email_address
     return StubSimpleBuzzWrapper()
 
 class XmppHandlerTest(BuzzChatBotFunctionalTestCase):
@@ -252,6 +253,19 @@ class XmppHandlerTest(BuzzChatBotFunctionalTestCase):
 
     expected_item = 'Posted: %s' % self.handler.buzz_wrapper.url
     self.assertEquals(expected_item, message.message_to_send)
+
+  def test_post_command_posts_message_for_for_correct_sender(self):
+    # Using Adium format for message sender id
+    sender = '1@example.com/Adium457EE950'
+    email_address = extract_sender_email_address(sender)
+    user_token = oauth_handlers.UserToken(email_address=email_address)
+    user_token.access_token_string = 'some thing that looks like an access token from a distance'
+    user_token.put()
+    message = StubMessage(sender=sender, body='%s some message' % XmppHandler.POST_CMD)
+
+    self.handler.message_received(message=message)
+
+    self.assertEquals(email_address, self.handler.email_address)
 
   def test_post_command_strips_command_from_posted_message(self):
     sender = '1@example.com'

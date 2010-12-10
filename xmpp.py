@@ -261,7 +261,7 @@ class XmppHandler(webapp.RequestHandler):
     logging.info('Command was: %s' % message.command)
     command = self._get_canonical_command(message)
     
-    self.buzz_wrapper = self._make_wrapper(message.sender)
+    self.buzz_wrapper = self._make_wrapper(extract_sender_email_address(message.sender))
 
     if command and command in XmppHandler.PERMITTED_COMMANDS:
       handler_name = '%s_command' % command
@@ -305,7 +305,7 @@ class XmppHandler(webapp.RequestHandler):
   def handle_exception(self, exception, debug_mode):
     logging.error('handle_exception: calling webapp.RequestHandler superclass')
     
-    # All code that logs the content of the error uses pformat because in situations
+    # All code that logs the content of the error uses pprint.pformat() because in situations
     # where the message contains non-ASCII characters the use of str() was causing
     # an exception in the logging library which would hide the original exception
     
