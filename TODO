@@ -2,7 +2,6 @@ Buzz Chat Bot
 ============
 Register the app so that people don't have to trust anonymous
 When someone adds the bot to their roster, send them a link to the app's website so that they can do the oauth dance
-Profile page should show the email address of the current user.
 Verify that phrase search works and add tests for it 
 Update the PRD - describing this bot
 Work out how to handle location-based Track and complex searches. Perhaps using the web interface?
