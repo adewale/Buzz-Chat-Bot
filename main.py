@@ -28,7 +28,13 @@ import simple_buzz_wrapper
 class ProfileViewingHandler(webapp.RequestHandler):
   @login_required
   def get(self):
-    user_token = oauth_handlers.UserToken.get_current_user_token()
+
+    # Users who don't have tokens should get sent to the front page
+    if not oauth_handlers.UserToken.access_token_exists():
+      self.redirect('/')
+      return
+
+    user_token = oauth_handlers.UserToken.get_current_user_token()      
     buzz_wrapper = oauth_handlers.make_wrapper(user_token.email_address)
     user_profile_data = buzz_wrapper.get_profile()
 
@@ -58,7 +64,6 @@ class PostsHandler(webapp.RequestHandler):
     """Show all the resources in this collection"""
     logging.info("Headers were: %s" % str(self.request.headers))
     logging.info('Request: %s' % str(self.request))
-    logging.debug("New content: %s" % self.request.body)
     id = self.request.get('id')
     logging.debug("Request id = '%s'", id)
 
