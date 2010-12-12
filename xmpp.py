@@ -418,7 +418,7 @@ class XmppHandler(webapp.RequestHandler):
     reply(message_builder, message)
 
 def extract_sender_email_address(message_sender):
-    return message_sender.split('/')[0]
+    return message_sender.split('/')[0].lower()
 
 def reply(message_builder, message):
   message_to_send = message_builder.build_message()

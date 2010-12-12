@@ -49,7 +49,7 @@ class RequestError(Error):
 
 # TODO(ade) This class is really a BuzzGaeBuilder. Rename it.
 class BuzzGaeClient(object):
-  def __init__(self, consumer_key='anonymous', consumer_secret='anonymous', api_key=None,):
+  def __init__(self, consumer_key='anonymous', consumer_secret='anonymous', api_key=None):
     self.api_key = api_key
     self.consumer = oauth.Consumer(consumer_key, consumer_secret)
     self.consumer_key = consumer_key

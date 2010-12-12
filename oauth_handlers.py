@@ -50,7 +50,7 @@ class UserToken(db.Model):
     request_token_string = repr(request_token)
 
     # TODO(ade) Support users who sign in to AppEngine with a federated identity aka OpenId
-    email = user.email()
+    email = user.email().lower()
 
     logging.info('Creating user token: key_name: %s request_token_string: %s email_address: %s' % (
     user_id, request_token_string, email))

@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import main
+import os
 import unittest
 
 from gaetestbed import FunctionalTestCase
@@ -254,7 +255,7 @@ class XmppHandlerTest(BuzzChatBotFunctionalTestCase):
     expected_item = 'Posted: %s' % self.handler.buzz_wrapper.url
     self.assertEquals(expected_item, message.message_to_send)
 
-  def test_post_command_posts_message_for_for_correct_sender(self):
+  def test_post_command_posts_message_for_correct_sender(self):
     # Using Adium format for message sender id
     sender = '1@example.com/Adium457EE950'
     email_address = extract_sender_email_address(sender)
@@ -266,6 +267,43 @@ class XmppHandlerTest(BuzzChatBotFunctionalTestCase):
     self.handler.message_received(message=message)
 
     self.assertEquals(email_address, self.handler.email_address)
+
+  def test_post_command_posts_message_for_sender_ignoring_case(self):
+    # Using Adium format for message sender id
+    sender = 'UPPER@example.com/Adium457EE950'
+    lower_email_address = extract_sender_email_address(sender).lower()
+    user_token = oauth_handlers.UserToken(email_address=lower_email_address)
+    user_token.access_token_string = 'some thing that looks like an access token from a distance'
+    user_token.put()
+    message = StubMessage(sender=sender, body='%s some message' % XmppHandler.POST_CMD)
+
+    self.handler.message_received(message=message)
+
+    self.assertEquals(lower_email_address, self.handler.email_address)
+    expected_item = 'Posted: %s' % self.handler.buzz_wrapper.url
+    self.assertEquals(expected_item, message.message_to_send)
+    
+  def test_post_command_posts_message_for_sender_with_mixed_case_oauth_token(self):
+      # Using Adium format for message sender id
+      sender = 'upper@example.com/Adium457EE950'
+      email_address = extract_sender_email_address(sender)
+      mixed_email_address = 'uPPeR@example.com'
+      
+      # Note that the test simulates the OAuth dance here.
+      # The other tests don't need an environment that's this realistic
+      os.environ['USER_EMAIL']  = mixed_email_address
+      user_token = oauth_handlers.UserToken.create_user_token('something that looks like a request token')
+      user_token.put()
+      #user_token = oauth_handlers.UserToken(email_address=mixed_email_address)
+      access_token_string = 'some thing that looks like an access token from a distance'
+      user_token.set_access_token(access_token_string)
+      user_token.put()
+      message = StubMessage(sender=sender, body='%s some message' % XmppHandler.POST_CMD)
+
+      self.handler.message_received(message=message)
+
+      expected_item = 'Posted: %s' % self.handler.buzz_wrapper.url
+      self.assertEquals(expected_item, message.message_to_send)
 
   def test_post_command_strips_command_from_posted_message(self):
     sender = '1@example.com'
