@@ -19,12 +19,15 @@ import logging
 import oauth_wrap
 import oauth2 as oauth
 import urllib
-import urlparse
 
+# Conditionally import these functions so that they work in Python 2.5 and 2.6
 try:
-  from urlparse import parse_qs, parse_qsl, urlparse
+  from urlparse import parse_qs, parse_qsl
 except ImportError:
   from cgi import parse_qs, parse_qsl
+
+from urlparse import urlparse
+from urlparse import urlunparse
 
 # TODO(ade) Replace user-agent with something specific
 HEADERS = {
@@ -81,7 +84,7 @@ class BuzzGaeClient(object):
   def generate_authorisation_url(self, request_token):
     """Returns the URL the user should be redirected to in other to gain access to their account."""
     
-    base_url = urlparse.urlparse(AUTHORIZE_URL)
+    base_url = urlparse(AUTHORIZE_URL)
     query = parse_qs(base_url.query)
     query['oauth_token'] = request_token['oauth_token']
 
@@ -89,7 +92,7 @@ class BuzzGaeClient(object):
 
     url = (base_url.scheme, base_url.netloc, base_url.path, base_url.params,
       urllib.urlencode(query, True), base_url.fragment)
-    authorisation_url = urlparse.urlunparse(url)
+    authorisation_url = urlunparse(url)
     return authorisation_url
 
   def upgrade_to_access_token(self, request_token, oauth_verifier):
